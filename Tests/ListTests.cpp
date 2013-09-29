@@ -43,5 +43,23 @@ namespace tests
 
 			Assert::AreEqual(std::string(value), newforward_list.front());
 		}
+
+		TEST_METHOD(ForwardList_Default_Begin_Equals_End)
+		{
+			const forward_list<int> list;
+			Assert::IsTrue(list.begin() == list.end());
+		}
+
+		TEST_METHOD(ForwardList_Default_CBegin_Equals_CEnd)
+		{
+			const forward_list<int> list;
+			Assert::IsTrue(list.cbegin() == list.cend());
+		}
+
+		TEST_METHOD(ForwardList_BeforeBegin_Is_Before_Begin)
+		{
+			const forward_list<int> list;
+			Assert::IsTrue(++list.before_begin() == list.begin());
+		}
 	};
 }
