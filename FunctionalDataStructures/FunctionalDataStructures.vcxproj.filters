@@ -18,10 +18,10 @@
     <ClInclude Include="include\wenda\fds\FDS_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\wenda\fds\List.h">
+    <ClInclude Include="include\wenda\fds\intrusive_ptr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\wenda\fds\intrusive_ptr.h">
+    <ClInclude Include="include\wenda\fds\forward_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

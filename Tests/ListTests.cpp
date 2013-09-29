@@ -3,45 +3,45 @@
 
 #include <string>
 
-#include <wenda/fds/List.h>
+#include <wenda/fds/forward_list.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace WENDA_FDS_NAMESPACE;
 
 namespace tests
 {
-	TEST_CLASS(ListTests)
+	TEST_CLASS(ForwardListTests)
 	{
-		TEST_METHOD(List_Default_Is_Empty)
+		TEST_METHOD(ForwardList_Default_Is_Empty)
 		{
-			const List<int> list;
-			Assert::IsTrue(list.empty());
+			const forward_list<int> forward_list;
+			Assert::IsTrue(forward_list.empty());
 		}
 
-		TEST_METHOD(List_Can_PushFront_RValue)
+		TEST_METHOD(ForwardList_Can_PushFront_RValue)
 		{
-			const List<int> list;
-			auto newList = list.push_front(5);
+			const forward_list<int> forward_list;
+			auto newforward_list = forward_list.push_front(5);
 
-			Assert::AreEqual(5, newList.front());
+			Assert::AreEqual(5, newforward_list.front());
 		}
 
-		TEST_METHOD(List_Can_PushFront_LValue)
+		TEST_METHOD(ForwardList_Can_PushFront_LValue)
 		{
-			const List<int> list;
+			const forward_list<int> forward_list;
 			auto value = 6;
-			auto newList = list.push_front(value);
+			auto newforward_list = forward_list.push_front(value);
 
-			Assert::AreEqual(value, newList.front());
+			Assert::AreEqual(value, newforward_list.front());
 		}
 
-		TEST_METHOD(List_Can_EmplaceFront)
+		TEST_METHOD(ForwardList_Can_EmplaceFront)
 		{
-			const List<std::string> list;
+			const forward_list<std::string> forward_list;
 			auto value = "abcd";
-			auto newList = list.emplace_front(value);
+			auto newforward_list = forward_list.emplace_front(value);
 
-			Assert::AreEqual(std::string(value), newList.front());
+			Assert::AreEqual(std::string(value), newforward_list.front());
 		}
 	};
 }

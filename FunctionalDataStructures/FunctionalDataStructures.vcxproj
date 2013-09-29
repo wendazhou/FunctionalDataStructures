@@ -77,7 +77,7 @@
   <ItemGroup>
     <ClInclude Include="include\wenda\fds\FDS_common.h" />
     <ClInclude Include="include\wenda\fds\intrusive_ptr.h" />
-    <ClInclude Include="include\wenda\fds\List.h" />
+    <ClInclude Include="include\wenda\fds\forward_list.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
