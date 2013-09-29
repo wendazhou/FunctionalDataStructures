@@ -22,12 +22,12 @@ public:
 		}
 	}
 
-	intrusive_ptr()
+	intrusive_ptr() WENDA_NOEXCEPT
 		: pointer(nullptr)
 	{
 	}
 
-	intrusive_ptr(std::nullptr_t)
+	intrusive_ptr(std::nullptr_t) WENDA_NOEXCEPT
 		: pointer(nullptr)
 	{
 	}
@@ -41,7 +41,7 @@ public:
 		}
 	}
 
-	intrusive_ptr(intrusive_ptr<T>&& other)
+	intrusive_ptr(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
@@ -58,7 +58,7 @@ public:
 	}
 
     template<typename U, typename SFINAE = typename std::enable_if<std::is_assignable<T*, U*>::value, void>::type>
-	intrusive_ptr(intrusive_ptr<U>&& other)
+	intrusive_ptr(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
@@ -76,53 +76,53 @@ public:
 		}
 	}
 
-	T* get() { return pointer; }
-	T const* get() const { return pointer; }
+	T* get() WENDA_NOEXCEPT { return pointer; }
+	T const* get() const WENDA_NOEXCEPT { return pointer; }
 
-	T& operator*() { return *pointer; }
-	T const& operator*() const { return *pointer; }
+	T& operator*() WENDA_NOEXCEPT { return *pointer; }
+	T const& operator*() const WENDA_NOEXCEPT { return *pointer; }
 
-	T* operator->() { return pointer; }
-	T const* operator->() const { return pointer; }
+	T* operator->() WENDA_NOEXCEPT { return pointer; }
+	T const* operator->() const WENDA_NOEXCEPT { return pointer; }
 
-	explicit operator bool() const
+	explicit operator bool() const WENDA_NOEXCEPT
 	{
 		return pointer;
 	}
 };
 
 template<typename T, typename U>
-bool operator==(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right)
+bool operator==(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
 {
 	return left.get() == right.get();
 }
 
 template<typename T>
-bool operator==(intrusive_ptr<T> const& left, std::nullptr_t)
+bool operator==(intrusive_ptr<T> const& left, std::nullptr_t) WENDA_NOEXCEPT
 {
 	return left.get() == nullptr;
 }
 
 template<typename T>
-bool operator==(std::nullptr_t, intrusive_ptr<T> const& right)
+bool operator==(std::nullptr_t, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
 {
 	return nullptr == right.get();
 }
 
 template<typename T, typename U>
-bool operator!=(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right)
+bool operator!=(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
 {
 	return left.get() != right.get();
 }
 
 template<typename T>
-bool operator!=(intrusive_ptr<T> const& left, std::nullptr_t)
+bool operator!=(intrusive_ptr<T> const& left, std::nullptr_t) WENDA_NOEXCEPT
 {
 	return left.get() != nullptr;
 }
 
 template<typename T>
-bool operator!=(std::nullptr_t, intrusive_ptr<T> const& right)
+bool operator!=(std::nullptr_t, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
 {
 	return nullptr != right.get();
 }
@@ -140,23 +140,23 @@ class intrusive_refcount
 
 	std::atomic_size_t counter;
 public:
-	intrusive_refcount()
+	intrusive_refcount() WENDA_NOEXCEPT
 		: counter(0)
 	{
 	}
 
-	intrusive_refcount(intrusive_refcount const& other)
+	intrusive_refcount(intrusive_refcount const& other) WENDA_NOEXCEPT
 		: counter(0)
 	{
 	}
 };
 
-std::size_t add_reference(intrusive_refcount* obj)
+std::size_t add_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
 {
     return ++(obj->counter);
 }
 
-std::size_t remove_reference(intrusive_refcount* obj)
+std::size_t remove_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
 {
 	return --(obj->counter);
 }
