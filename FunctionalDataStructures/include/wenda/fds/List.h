@@ -63,6 +63,12 @@ public:
 		return List<T>(make_intrusive<detail::ListNode<T>>(std::move(value), next));
 	}
 
+    template<typename... Args>
+	List<T> emplace_front(Args... args) const
+	{
+		return List<T>(make_intrusive<detail::ListNode<T>>(T(std::forward<Args>(args)...), next));
+	}
+
 	T const& front() const
 	{
 		return next->value;
