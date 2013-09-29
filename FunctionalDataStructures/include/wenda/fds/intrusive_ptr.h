@@ -231,12 +231,12 @@ public:
 	}
 };
 
-std::size_t add_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
+inline std::size_t add_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
 {
     return ++(obj->counter);
 }
 
-std::size_t remove_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
+inline std::size_t remove_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
 {
 	return --(obj->counter);
 }
