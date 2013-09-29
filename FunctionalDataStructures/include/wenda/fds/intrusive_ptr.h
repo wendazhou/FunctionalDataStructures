@@ -8,30 +8,51 @@
 
 WENDA_FDS_NAMESPACE_BEGIN
 
+/**
+* This class implements an intrusive smart pointer.
+* In order for a type @p T to be used with the smart pointer,
+* there must exists free functions add_reference() and remove_reference()
+* that can be invoked with pointers to @p T.
+* @tparam T The type pointed to by this pointer. It may be an incomplete type.
+*/
 template<typename T>
 class intrusive_ptr
 {
 	T* pointer;
 public:
-	intrusive_ptr(T* pointer)
+	/**
+	* Initializes the @ref intrusive_ptr to a default value.
+	*/
+	intrusive_ptr() = default;
+
+	/**
+	* Initializes a new instance from the given @p pointer.
+	* It is preferable to directly construct the type into an
+	* intrusive_ptr with make_intrusive().
+	* @param pointer The pointer that is to be held. May be null.
+	*/
+	explicit intrusive_ptr(T* pointer)
 		: pointer(pointer)
 	{
 		if (pointer)
 		{
-		    add_reference(pointer);
+			add_reference(pointer);
 		}
 	}
 
-	intrusive_ptr() WENDA_NOEXCEPT
-		: pointer(nullptr)
-	{
-	}
-
+	/**
+    * Initializes the @ref intrusive_ptr to a value corresponding to null.
+	*/
 	intrusive_ptr(std::nullptr_t) WENDA_NOEXCEPT
 		: pointer(nullptr)
 	{
 	}
 
+	/**
+    * Copy constructor.
+    * Copies the pointer, and if @p other is not equivalent to null,
+    * adds a reference to the pointed-to object.
+	*/
 	intrusive_ptr(intrusive_ptr<T> const& other)
 		: pointer(other.pointer)
 	{
@@ -41,12 +62,41 @@ public:
 		}
 	}
 
+	/**
+    * Move constructor. Moves the pointer, and nulls the source object.
+	*/
 	intrusive_ptr(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
 	}
 
+	/**
+    * Assignment copy operator.
+	*/
+	intrusive_ptr<T>& operator=(intrusive_ptr<T> const& other)
+	{
+		using std::swap;
+
+		intrusive_ptr<T> temp(other);
+
+		swap(*this, temp);
+	}
+
+	/**
+    * Assignment move operator.
+	*/
+	intrusive_ptr<T>& operator=(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
+	{
+		pointer = other.pointer;
+		other.pointer = nullptr;
+	}
+
+	/**
+    * Converts between @ref intrusive_ptr of compatible types. Two types @p T and @p U are compatible if
+    * their respective pointer types are compatible.
+    * @param other The pointer to be converted.
+	*/
     template<typename U, typename SFINAE = typename std::enable_if<std::is_assignable<T*, U*>::value, void>::type>
 	intrusive_ptr(intrusive_ptr<U> const& other)
 		: pointer(other.pointer)
@@ -57,6 +107,10 @@ public:
 		}
 	}
 
+	/**
+    * Converts between @ref intrusive_ptr of compatible types.
+    * This overload moves the values instead of copying them.
+	*/
     template<typename U, typename SFINAE = typename std::enable_if<std::is_assignable<T*, U*>::value, void>::type>
 	intrusive_ptr(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
@@ -76,15 +130,41 @@ public:
 		}
 	}
 
+	/**
+    * Gets the underlying naked pointer.
+    * @returns The underlying pointer.
+	*/
 	T* get() WENDA_NOEXCEPT { return pointer; }
+	/**
+    * Gets the underlying naked pointer.
+    * @returns The underlying pointer.
+	*/
 	T const* get() const WENDA_NOEXCEPT { return pointer; }
 
+	/**
+    * Dereferences this pointer.
+    * @returns A reference to the pointed to object.
+	*/
 	T& operator*() WENDA_NOEXCEPT { return *pointer; }
+	/**
+    * Dereferences this pointer.
+    * @returns A const reference to the pointed to object.
+	*/
 	T const& operator*() const WENDA_NOEXCEPT { return *pointer; }
 
+	/**
+    * Accesses the members of the pointed to object.
+	*/
 	T* operator->() WENDA_NOEXCEPT { return pointer; }
+	/**
+    * Accesses the const members of the pointed to object.
+	*/
 	T const* operator->() const WENDA_NOEXCEPT { return pointer; }
 
+	/**
+    * Explicit conversion to bool.
+    * @returns True if the pointer is not null, otherwise true.
+	*/
 	explicit operator bool() const WENDA_NOEXCEPT
 	{
 		return pointer;
