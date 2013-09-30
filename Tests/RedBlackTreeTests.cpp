@@ -48,6 +48,29 @@ namespace tests
 			Assert::AreEqual(5, *found);
 		}
 
+		TEST_METHOD(RedBlackTree_Inserting_Element_Returns_Inserted_True)
+		{
+			using std::get;
+
+			const redblack_tree<int> tree;
+
+			auto inserted = get<2>(tree.insert(5));
+
+			Assert::IsTrue(inserted);
+		}
+
+		TEST_METHOD(RedBlackTree_Inserting_Element_Returns_Iterator_To_Element)
+		{
+			using std::get;
+
+		    redblack_tree<int> tree;
+			redblack_tree<int>::iterator inserted;
+
+			std::tie(tree, inserted, std::ignore) = tree.insert(5);
+
+			Assert::AreEqual(5, *inserted);
+		}
+
 		TEST_METHOD(RedBlackTree_Can_Assign)
 		{
 			using std::get;
@@ -75,10 +98,14 @@ namespace tests
 		void TestInsert(int count)
 		{
 			redblack_tree<int> tree;
+			redblack_tree<int>::iterator it;
+			bool inserted;
 
 			for (int i = 0; i < count; i++)
 			{
-				std::tie(tree, std::ignore, std::ignore) = tree.insert(i);
+				std::tie(tree, it, inserted) = tree.insert(i);
+				Assert::AreEqual(i, *it);
+				Assert::IsTrue(inserted);
 			}
 
 			for (int i = 0; i < count; i++)

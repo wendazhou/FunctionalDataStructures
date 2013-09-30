@@ -36,7 +36,7 @@ namespace detail
 	balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right);
 
     template<typename T>
-	intrusive_ptr<redblack_node<T>> make_black(redblack_node<T> const*);
+	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const*);
 
     template<typename T>
 	class redblack_node
@@ -44,22 +44,22 @@ namespace detail
 	{
 		friend class redblack_tree_iterator<T>;
 
-		template<typename T1, typename U, typename Compare> 
-		friend std::tuple<intrusive_ptr<const redblack_node<T1>>, redblack_node<T1> const*, bool> 
-		insert_impl(redblack_node<T1> const*, U&&, Compare const&);
+		template<typename T1, typename U, typename Compare>
+		friend std::tuple < intrusive_ptr < const redblack_node<T1 >> , redblack_node<T1> const*, bool>
+			insert_impl(redblack_node<T1> const*, U&&, Compare const&);
 
-        template<typename T1, typename U>
-        friend intrusive_ptr<redblack_node<T1>> 
-	    balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T1>> left, intrusive_ptr<const redblack_node<T1>> right);
+		template<typename T1, typename U>
+		friend intrusive_ptr<redblack_node<T1>>
+			balance(NodeColour colour, U&& value, intrusive_ptr < const redblack_node < T1 >> left, intrusive_ptr < const redblack_node < T1 >> right);
 
-	    friend intrusive_ptr<redblack_node<T>> make_black<>(redblack_node<T> const*);
+		friend intrusive_ptr<const redblack_node<T>> make_black<>(redblack_node<T> const*);
 
 		T data;
 		NodeColour colour;
 		intrusive_ptr<const redblack_node<T>> left;
 		intrusive_ptr<const redblack_node<T>> right;
 	public:
-		redblack_node(T data, NodeColour colour, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right)
+		redblack_node(T data, NodeColour colour, intrusive_ptr < const redblack_node < T >> left, intrusive_ptr < const redblack_node < T >> right)
 			: data(std::move(data)), colour(std::move(colour)),
 			left(std::move(left)), right(std::move(right))
 		{
@@ -75,7 +75,7 @@ namespace detail
 			return right == nullptr ? this : right->maximum();
 		}
 
-        template<typename U, typename Compare>
+		template<typename U, typename Compare>
 		redblack_node<T> const* find(U&& value, Compare const& comp) const WENDA_NOEXCEPT
 		{
 			if (comp(value, data))
@@ -84,7 +84,7 @@ namespace detail
 			}
 			else if (comp(data, value))
 			{
-			    return right == nullptr ? nullptr : right->find(std::forward<U>(value), comp);
+				return right == nullptr ? nullptr : right->find(std::forward<U>(value), comp);
 			}
 			else
 			{
@@ -92,11 +92,18 @@ namespace detail
 			}
 		}
 
+		void set_colour(NodeColour colour) { this->colour = colour; }
+		NodeColour get_colour() const { return this->colour; }
 	};
 
     template<typename T>
-	intrusive_ptr<redblack_node<T>> make_black(redblack_node<T> const* pointer)
+	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const* pointer)
 	{
+		if (pointer->colour == NodeColour::Black)
+		{
+			return intrusive_ptr<const redblack_node<T>>(pointer);
+		}
+
 		return make_intrusive<redblack_node<T>>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
 	}
 
@@ -259,13 +266,13 @@ public:
 	typedef T value_type;
 	typedef detail::redblack_tree_iterator<T> iterator;
 private:
-	intrusive_ptr<detail::redblack_node<T>> root;
+	intrusive_ptr<const detail::redblack_node<T>> root;
 
-	explicit redblack_tree(intrusive_ptr<detail::redblack_node<T>> const& root)
+	explicit redblack_tree(intrusive_ptr<const detail::redblack_node<T>> const& root)
 		: root(root)
     {}
 
-	explicit redblack_tree(intrusive_ptr<detail::redblack_node<T>>&& root)
+	explicit redblack_tree(intrusive_ptr<const detail::redblack_node<T>>&& root)
 		: root(std::move(root))
     {}
 public:
@@ -330,13 +337,24 @@ public:
 
 		intrusive_ptr<const detail::redblack_node<T>> newRoot;
 		detail::redblack_node<T> const* element;
-		bool found;
+		bool inserted;
 
-		std::tie(newRoot, element, found) = detail::insert_impl(root.get(), std::forward<U>(value), Compare());
+		std::tie(newRoot, element, inserted) = detail::insert_impl(root.get(), std::forward<U>(value), Compare());
 
-		auto blackened = detail::make_black(newRoot.get());
+		intrusive_ptr<const detail::redblack_node<T>> blackened;
 
-		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), found);
+		if (inserted && element == newRoot.get())
+		{
+            // if we have just inserted a node at the root, we can directly change it.
+			const_cast<detail::redblack_node<T>*>(newRoot.get())->set_colour(detail::NodeColour::Black);
+			blackened = std::move(newRoot);
+		}
+		else
+		{
+		    blackened = detail::make_black(newRoot.get());
+		}
+
+		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), inserted);
 	}
 
 	iterator find(T const& value)

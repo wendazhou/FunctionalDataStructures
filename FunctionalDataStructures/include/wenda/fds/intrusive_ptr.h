@@ -262,7 +262,7 @@ intrusive_ptr<T> const_pointer_cast(intrusive_ptr<U> const& pointer) WENDA_NOEXC
 {
 	static_assert(detail::const_cast_valid<T, U>::value, 
 	    "const pointer cast is valid only if the similar const_cast between the raw pointer types would be valid.");
-	return intrusive_ptr<T>(pointer);
+	return intrusive_ptr<T>(const_cast<T*>(pointer.get()));
 }
 
 template<typename T, typename U>
