@@ -162,5 +162,12 @@ namespace tests
 		{
 			TestInsert(10, true);
 		}
+
+		TEST_METHOD(RedBlackTree_Insert_Correct_For_Non_Monotonic_Elements)
+		{
+			std::vector<int> data{ 1, 3, 5, 2, 4, 0, -5 };
+
+			TestInsert(data, true);
+		}
 	};
 }

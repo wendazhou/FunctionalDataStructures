@@ -10,10 +10,18 @@
 
 #include "intrusive_ptr.h"
 
+/**
+* @file redblack_tree.h
+* This file provides the implementation for a persistent functional red-black tree.
+*/
+
 WENDA_FDS_NAMESPACE_BEGIN
 
 namespace detail
 {
+	/**
+    * This enum represents the colour of a node in the red-black tree.
+	*/
 	enum class NodeColour
 	{
         Black,
@@ -34,6 +42,10 @@ namespace detail
     template<typename T>
 	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const*);
 
+	/**
+    * This class represents a node in a red-black tree.
+    * @tparam T The type of the elements stored by the node.
+	*/
     template<typename T>
 	class redblack_node
 		: public intrusive_refcount
@@ -51,27 +63,43 @@ namespace detail
 
 		friend intrusive_ptr<const redblack_node<T>> make_black<>(redblack_node<T> const*);
 
-		T data;
-		NodeColour colour;
-		intrusive_ptr<const redblack_node<T>> left;
-		intrusive_ptr<const redblack_node<T>> right;
+		T data; ///< The data held by the node
+		NodeColour colour; ///< The colour of the node
+		intrusive_ptr<const redblack_node<T>> left; ///< A pointer to the smaller (left) child, or null.
+		intrusive_ptr<const redblack_node<T>> right; ///< A pointer to the greater (right) child, or null.
 	public:
-		redblack_node(T data, NodeColour colour, intrusive_ptr < const redblack_node < T >> left, intrusive_ptr < const redblack_node < T >> right)
-			: data(std::move(data)), colour(std::move(colour)),
-			left(std::move(left)), right(std::move(right))
+		/**
+        * Initializes a new node with the given data.
+		*/
+		redblack_node(T data, NodeColour colour, intrusive_ptr<const redblack_node<T>> left, 
+			intrusive_ptr<const redblack_node<T>> right)
+			: data(std::move(data)), colour(std::move(colour)), left(std::move(left)), right(std::move(right))
 		{
 		}
 
+		/**
+        * Returns a pointer to the minimum node from this node.
+		*/
 		redblack_node<T> const* minimum() const WENDA_NOEXCEPT
 		{
 			return left == nullptr ? this : left->minimum();
 		}
 
+		/**
+        * Returns a pointer to the maximum node from this node.
+		*/
 		redblack_node<T> const* maximum() const WENDA_NOEXCEPT
 		{
 			return right == nullptr ? this : right->maximum();
 		}
 
+		/**
+        * Finds the node with an equivalent value (in the strict weak ordering sense)
+        * in the children of this node.
+        * @param value The value to be found.
+        * @param comp The comparison function to use. It must be compatible with the comparison
+        * function used to construct this tree.
+		*/
 		template<typename U, typename Compare>
 		redblack_node<T> const* find(U&& value, Compare const& comp) const WENDA_NOEXCEPT
 		{
@@ -89,10 +117,19 @@ namespace detail
 			}
 		}
 
+		/**
+        * Sets this node to a given colour.
+		*/
 		void set_colour(NodeColour colour) { this->colour = colour; }
+		/**
+        * Gets the current colour of the node.
+		*/
 		NodeColour get_colour() const { return this->colour; }
 	};
 
+	/**
+    * Constructs a new black node from the given node, or if it is already black, returns the node.
+	*/
     template<typename T>
 	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const* pointer)
 	{
@@ -104,6 +141,19 @@ namespace detail
 		return make_intrusive<redblack_node<T>>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
 	}
 
+	/**
+    * Helper function for the balance() function.
+    * This rebalances the tree by creating the left and right nodes of a balanced red node, from the children
+    * of the respective left and right nodes.
+    * @param leftLeft The left child of the left node.
+    * @param leftRight The right child of the left node.
+    * @param rightLeft The left child of the right node.
+    * @param rightRight The right child of the right node.
+    * @param valueLeft The value of the left node.
+    * @param valueRight The value of the right node.
+    * @returns A tuple containing the left child as its first element and the right child as its second.
+    * @tparam T The type of the element held by the nodes.
+	*/
     template<typename T, typename LL, typename LR, typename RL, typename RR, typename ValueL, typename ValueR>
 	std::tuple<intrusive_ptr<redblack_node<T>>, intrusive_ptr<redblack_node<T>>> 
 	balance_create_leftright(LL&& leftLeft, LR&& leftRight, RL&& rightLeft, RR&& rightRight, 
@@ -122,6 +172,13 @@ namespace detail
 		return return_t(std::move(newLeft), std::move(newRight));
 	}
 
+	/**
+    * Helper function for balance(), creates a red node from the given left and right black nodes.
+    * @param left The left child of the node to be created.
+    * @param right The right child of the node to be created.
+    * @param value The value of the node to be created.
+    * @tparam T The type of the element held by the nodes.
+	*/
     template<typename T, typename Left, typename Right, typename Value>
 	intrusive_ptr<redblack_node<T>> balance_create_middle(Left&& left, Right&& right, Value&& value)
 	{
@@ -129,6 +186,18 @@ namespace detail
 		    std::forward<Left>(left), std::forward<Right>(right));
 	}
 
+	/**
+    * Tree balancing operation as described by Okasaki in "Red-Black trees in a functional setting".
+    * This operation rebalances from the point of view of the grandparent of a node with a red parent
+    * that has been inserted.
+    * @param colour The colour of the grandparent node.
+    * @param value The value of the grandparent node.
+    * @param left The left child of the grandparent node.
+    * @param right The right child of the grandparent node.
+    * @param[in,out] inserted A pointer to the node that has just been inserted.
+    * It will be fixed up if necessary (if the rebalancing has affected the pointed-to node).
+    * @returns A pointer to an equivalent rebalanced tree.
+	*/
     template<typename T, typename U>
 	intrusive_ptr<redblack_node<T>> balance(NodeColour colour, U&& value, 
 		intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right,
@@ -214,6 +283,16 @@ namespace detail
 		return make_intrusive<redblack_node<T>>(std::forward<U>(value), colour, std::move(left), std::move(right));
 	}
 
+	/**
+    * Implementation for the insertion algorithm for the red-black trees.
+    * This inserts the node at the correct position, and then rebalances the tree.
+    * @param tree The node into which to insert the value.
+    * @param value The value to be inserted.
+    * @param compare The comparison function to be used to define the insertion position.
+    * It must be compatible with the ordering of the tree.
+    * @returns A tuple containing a pointer to the new tree, a pointer to the inserted node, and a
+    * boolean indicating whether anything was inserted.
+	*/
     template<typename T, typename U, typename Compare>
 	std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> 
 	insert_impl(redblack_node<T> const* tree, U&& value, Compare const& compare)
@@ -250,6 +329,11 @@ namespace detail
 		}
 	}
 
+	/**
+    * This class implements an iterator for the red-black tree.
+    * The iterators for red-black trees model bidirectional iterators.
+    * @tparam T The type of the elements in the tree.
+	*/
     template<typename T>
 	class redblack_tree_iterator
 		: public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, T const*, T const&>
@@ -283,24 +367,25 @@ namespace detail
 	};
 }
 
-template<typename T>
-struct is_transparent
-	: std::false_type
-{};
-
-template<>
-struct is_transparent<std::less<>>
-	: std::true_type
-{};
-
+/**
+* This class implements a functional red-black tree.
+* @tparam T The type of the elements stored in the tree.
+* @tparam Compare The comparison function to be used in the tree.
+*/
 template<typename T, typename Compare = std::less<> >
 class redblack_tree
 {
 public:
+	/**
+    * This typedef represents the type of the elements stored in the tree.
+	*/
 	typedef T value_type;
+	/**
+    * This typedef represents the type of the iterator.
+	*/
 	typedef detail::redblack_tree_iterator<T> iterator;
 private:
-	intrusive_ptr<const detail::redblack_node<T>> root;
+	intrusive_ptr<const detail::redblack_node<T>> root; ///< The root of the tree
 
 	explicit redblack_tree(intrusive_ptr<const detail::redblack_node<T>> const& root)
 		: root(root)
@@ -310,18 +395,39 @@ private:
 		: root(std::move(root))
     {}
 public:
+	/**
+    * Default constructor for the @ref redblack_tree.
+    * Initializes a new empty tree.
+	*/
 	redblack_tree() WENDA_NOEXCEPT
 		: root(nullptr)
 	{}
 
+	/**
+    * Copy constructor for @ref redblack_tree.
+	*/
 	redblack_tree(redblack_tree<T> const& other)
 		: root(other.root)
 	{}
 
+	/**
+    * Move constructor for @ref redblack_tree.
+	*/
 	redblack_tree(redblack_tree<T>&& other) WENDA_NOEXCEPT
 		: root(std::move(other.root))
 	{}
 
+	/**
+    * Finds the given value in the red-black tree, returning
+    * an iterator to the value if it is found, if the element is
+    * not found, returns an iterator pointing to end().
+    * We say a value is found if there exists an equivalent value
+    * in the red-black tree with respect to the strict weak ordering
+    * determined by Compare.
+    * @param value The value to find.
+    * @returns An iterator to the equivalent element if found; otherwise
+    * an iterator to end().
+	*/
 	iterator find(T const& value) const WENDA_NOEXCEPT
 	{
 		if (root)
@@ -332,6 +438,10 @@ public:
 		return end();
 	}
 
+	/**
+    * Returns an iterator to the first and smallest element in the tree.
+    * @returns An iterator to the smallest element in the tree.
+	*/
 	iterator begin() const WENDA_NOEXCEPT
 	{
 		if (root)
@@ -344,26 +454,54 @@ public:
 		}
 	}
 
+	/**
+    * Returns an iterator to the first and smallest element in the tree.
+    * @returns An iterator to the smallest element in the tree.
+	*/
 	iterator cbegin() const WENDA_NOEXCEPT
 	{
 		return begin();
 	}
 
+	/**
+    * Returns an iterator one past the last (largest) element in the tree.
+    * @returns An iterator to the largest element in the tree.
+	*/
 	iterator end() const WENDA_NOEXCEPT
 	{
 		return iterator(nullptr);
 	}
 
+	/**
+    * Returns an iterator one past the last (largest) element in the tree.
+    * @returns An iterator to the largest element in the tree.
+	*/
 	iterator cend() const WENDA_NOEXCEPT
 	{
 		return end();
 	}
 
+	/**
+    * Tests whether there are any elements in the tree.
+    * @returns True if the tree is empty; otherwise false.
+	*/
 	bool empty() const WENDA_NOEXCEPT
 	{
 		return root == nullptr;
 	}
 
+	/**
+    * Returns a new tree containing the given value.
+    * This inserts the element into a new tree if it does not already exist, 
+	* not modifying this instance of the tree. If an equivalent value already exists,
+    * in the sense of the strict weak ordering induced by Compare, it does not create
+    * a new tree, but simply returns the existing tree.
+    * @param value The value to be inserted.
+    * @returns A tuple of three values, containing:
+    * - first, a pointer to the new tree
+    * - second, an iterator to the newly inserted element, if it was inserted, or an equivalent value, if it already existed.
+    * - third, a boolean value that is true if a value has been inserted, and false if the value was already present.
+	*/
     template<typename U>
 	std::tuple<redblack_tree<T>, iterator, bool> insert(U&& value) const
 	{
@@ -389,16 +527,6 @@ public:
 		}
 
 		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), inserted);
-	}
-
-	iterator find(T const& value)
-	{
-		if (root)
-		{
-			return iterator(root->find(value, Compare()));
-		}
-
-		return iterator(nullptr);
 	}
 };
 
