@@ -31,10 +31,6 @@ namespace detail
 	std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> 
 	insert_impl(redblack_node<T> const* tree, U&& value, Compare const& compare);
 
-    template<typename T, typename U>
-	intrusive_ptr<redblack_node<T>> 
-	balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right);
-
     template<typename T>
 	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const*);
 
@@ -49,8 +45,9 @@ namespace detail
 			insert_impl(redblack_node<T1> const*, U&&, Compare const&);
 
 		template<typename T1, typename U>
-		friend intrusive_ptr<redblack_node<T1>>
-			balance(NodeColour colour, U&& value, intrusive_ptr < const redblack_node < T1 >> left, intrusive_ptr < const redblack_node < T1 >> right);
+		friend intrusive_ptr<redblack_node<T1>> balance(NodeColour colour, U&& value, 
+			intrusive_ptr<const redblack_node<T1>> left, intrusive_ptr<const redblack_node<T1>> right,
+			redblack_node<T1> const*&);
 
 		friend intrusive_ptr<const redblack_node<T>> make_black<>(redblack_node<T> const*);
 
@@ -107,9 +104,35 @@ namespace detail
 		return make_intrusive<redblack_node<T>>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
 	}
 
+    template<typename T, typename LL, typename LR, typename RL, typename RR, typename ValueL, typename ValueR>
+	std::tuple<intrusive_ptr<redblack_node<T>>, intrusive_ptr<redblack_node<T>>> 
+	balance_create_leftright(LL&& leftLeft, LR&& leftRight, RL&& rightLeft, RR&& rightRight, 
+		ValueL&& valueLeft, ValueR&& valueRight)
+	{
+		auto newLeft = make_intrusive<redblack_node<T>>(
+			std::forward<ValueL>(valueLeft), NodeColour::Black, 
+			std::forward<LL>(leftLeft), std::forward<LR>(leftRight));
+
+		auto newRight = make_intrusive<redblack_node<T>>(
+			std::forward<ValueR>(valueRight), NodeColour::Black, 
+			std::forward<RL>(rightLeft), std::forward<RR>(rightRight));
+
+	    typedef std::tuple<intrusive_ptr<redblack_node<T>>, intrusive_ptr<redblack_node<T>>> return_t;
+
+		return return_t(std::move(newLeft), std::move(newRight));
+	}
+
+    template<typename T, typename Left, typename Right, typename Value>
+	intrusive_ptr<redblack_node<T>> balance_create_middle(Left&& left, Right&& right, Value&& value)
+	{
+		return make_intrusive<redblack_node<T>>(std::forward<Value>(value) , NodeColour::Red,
+		    std::forward<Left>(left), std::forward<Right>(right));
+	}
+
     template<typename T, typename U>
-	intrusive_ptr<redblack_node<T>> 
-	balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right)
+	intrusive_ptr<redblack_node<T>> balance(NodeColour colour, U&& value, 
+		intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right,
+		redblack_node<T> const*& inserted)
 	{
 		if (colour != NodeColour::Black)
 		{
@@ -120,32 +143,35 @@ namespace detail
 		{
 			if (left->left && left->left->colour == NodeColour::Red)
 			{
-				auto const& leftLeft = left->left->left;
-				auto const& leftRight = left->left->right;
-				auto const& rightLeft = left->right;
+				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
-				auto const& dataLeft = left->left->data;
-				auto const& dataMiddle = left->data;
+			    std::tie(newLeft, newRight) = balance_create_leftright<T>(
+					left->left->left, left->left->right, left->right, std::move(right),
+					left->left->data, std::forward<U>(value));
 
-				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, 
-					rightLeft, std::move(right));
+				if (inserted == left->left.get())
+				{
+					inserted = newLeft.get();
+				}
 
-				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+				return balance_create_middle<T>(std::move(newLeft), std::move(newRight), left->data);
 			}
 			else if (left->right && left->right->colour == NodeColour::Red)
 			{
-				auto const& leftLeft = left->left;
-				auto const& leftRight = left->right->left;
-				auto const& rightLeft = left->right->right;
+				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
-				auto const& dataLeft = left->data;
-				auto const& dataMiddle = left->right->data;
+				std::tie(newLeft, newRight) = balance_create_leftright<T>(
+					left->left, left->right->left, left->right->right, std::move(right),
+					left->data, std::forward<U>(value));
 
-				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, rightLeft, std::move(right));
+				auto retval = balance_create_middle<T>(std::move(newLeft), std::move(newRight), left->right->data);
 
-				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+				if (inserted == left->right.get())
+				{
+					inserted = retval.get();
+				}
+
+				return retval;
 			}
 		}
 
@@ -153,31 +179,35 @@ namespace detail
 		{
 			if (right->left && right->left->colour == NodeColour::Red)
 			{
-				auto const& leftRight = right->left->left;
-				auto const& rightLeft = right->left->right;
-				auto const& rightRight = right->right;
+				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
-				auto const& dataMiddle = right->left->data;
-				auto const& dataRight = right->data;
+				std::tie(newLeft, newRight) = balance_create_leftright<T>(
+					std::move(left), right->left->left, right->left->right, right->right,
+					std::forward<U>(value), right->data);
 
-				auto newLeft = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, std::move(left), leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+				auto retval = balance_create_middle<T>(std::move(newLeft), std::move(newRight), right->left->data);
 
-				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+				if (inserted == right->left.get())
+				{
+					inserted = retval.get();
+				}
+
+				return retval;
 			}
 			else if (right->right && right->right->colour == NodeColour::Red)
 			{
-				auto const& leftRight = right->left;
-				auto const& rightLeft = right->right->left;
-				auto const& rightRight = right->right->right;
+				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
-				auto const& dataMiddle = right->data;
-				auto const& dataRight = right->right->data;
+				std::tie(newLeft, newRight) = balance_create_leftright<T>(
+					std::move(left), right->left, right->right->left, right->right->right,
+					std::forward<U>(value), right->right->data);
 
-				auto newLeft = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, std::move(left), leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+				if (inserted == right->right.get())
+				{
+					inserted = newRight.get();
+				}
 
-				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+				return balance_create_middle<T>(std::move(newLeft), std::move(newRight), right->data);
 			}
 		}
 
@@ -198,17 +228,21 @@ namespace detail
 			return return_t(std::move(newTree), ptr, true);
 		}
 
+		intrusive_ptr<const redblack_node<T>> newTree;
+		redblack_node<T> const* iterator;
+		bool inserted;
+
 		if (compare(value, tree->data))
 		{
-			auto ins = insert_impl(tree->left.get(), std::forward<U>(value), compare);
-			auto newTree = balance(tree->colour, tree->data, std::move(get<0>(ins)), tree->right);
-			return return_t(std::move(newTree), get<1>(ins), get<2>(ins));
+		    std::tie(newTree, iterator, inserted) = insert_impl(tree->left.get(), std::forward<U>(value), compare);
+			auto balancedTree = balance(tree->colour, tree->data, std::move(newTree), tree->right, iterator);
+			return return_t(std::move(balancedTree), iterator, inserted);
 		}
 		else if (compare(tree->data, value))
 		{
-			auto ins = insert_impl(tree->right.get(), std::forward<U>(value), compare);
-			auto newTree = balance(tree->colour, tree->data, tree->left, std::move(get<0>(ins)));
-			return return_t(std::move(newTree), get<1>(ins), get<2>(ins));
+			std::tie(newTree, iterator, inserted) = insert_impl(tree->right.get(), std::forward<U>(value), compare);
+			auto balancedTree = balance(tree->colour, tree->data, tree->left, std::move(newTree), iterator);
+			return return_t(std::move(balancedTree), iterator, inserted);
 		}
 		else
 		{

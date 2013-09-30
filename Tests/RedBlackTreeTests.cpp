@@ -3,6 +3,8 @@
 
 #include <wenda/fds/redblack_tree.h>
 
+#include <vector>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace WENDA_FDS_NAMESPACE;
 
@@ -95,25 +97,39 @@ namespace tests
 			Assert::AreEqual(5, *found);
 		}
 
-		void TestInsert(int count)
+		void TestInsert(std::vector<int> values, bool verifyIterator = false)
 		{
-			redblack_tree<int> tree;
+            redblack_tree<int> tree;
 			redblack_tree<int>::iterator it;
 			bool inserted;
 
-			for (int i = 0; i < count; i++)
+			for (int i : values)
 			{
 				std::tie(tree, it, inserted) = tree.insert(i);
-				Assert::AreEqual(i, *it);
-				Assert::IsTrue(inserted);
+
+				if (verifyIterator)
+				{
+				    Assert::AreEqual(i, *it);
+				    Assert::IsTrue(inserted);
+				}
 			}
 
-			for (int i = 0; i < count; i++)
+			for (int i : values)
 			{
 				auto found = tree.find(i);
 
 				Assert::IsTrue(found != tree.end());
 				Assert::AreEqual(i, *found);
+			}
+		}
+
+		void TestInsert(int count, bool verifyIterator = false)
+		{
+			std::vector<int> data(count);
+
+			for (int i = 0; i < count; i++)
+			{
+				data[i] = i;
 			}
 		}
 
@@ -130,6 +146,21 @@ namespace tests
 		TEST_METHOD(RedBlackTree_Can_Insert_Multiple_Elements_10)
 		{
 			TestInsert(10);
+		}
+
+		TEST_METHOD(RedBlackTree_Insert_Returns_Correct_Iterator_2)
+		{
+			TestInsert(2, true);
+		}
+
+		TEST_METHOD(RedBlackTree_Insert_Returns_Correct_Iterator_3)
+		{
+			TestInsert(3, true);
+		}
+
+		TEST_METHOD(RedBlackTree_Insert_Returns_Correct_Iterator_10)
+		{
+			TestInsert(10, true);
 		}
 	};
 }
