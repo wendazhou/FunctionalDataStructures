@@ -116,14 +116,13 @@ namespace detail
 				auto const& leftLeft = left->left->left;
 				auto const& leftRight = left->left->right;
 				auto const& rightLeft = left->right;
-				auto const& rightRight = right;
 
 				auto const& dataLeft = left->left->data;
 				auto const& dataMiddle = left->data;
-				auto const& dataRight = value;
 
 				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+				auto newRight = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, 
+					rightLeft, std::move(right));
 
 				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
 			}
@@ -132,14 +131,12 @@ namespace detail
 				auto const& leftLeft = left->left;
 				auto const& leftRight = left->right->left;
 				auto const& rightLeft = left->right->right;
-				auto const& rightRight = right;
 
 				auto const& dataLeft = left->data;
 				auto const& dataMiddle = left->right->data;
-				auto const& dataRight = value;
 
 				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
-				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+				auto newRight = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, rightLeft, std::move(right));
 
 				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
 			}
@@ -149,32 +146,28 @@ namespace detail
 		{
 			if (right->left && right->left->colour == NodeColour::Red)
 			{
-				auto const& leftLeft = left;
 				auto const& leftRight = right->left->left;
 				auto const& rightLeft = right->left->right;
 				auto const& rightRight = right->right;
 
-				auto const& dataLeft = value;
 				auto const& dataMiddle = right->left->data;
 				auto const& dataRight = right->data;
 
-				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newLeft = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, std::move(left), leftRight);
 				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
 
 				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
 			}
 			else if (right->right && right->right->colour == NodeColour::Red)
 			{
-				auto const& leftLeft = left;
 				auto const& leftRight = right->left;
 				auto const& rightLeft = right->right->left;
 				auto const& rightRight = right->right->right;
 
-				auto const& dataLeft = value;
 				auto const& dataMiddle = right->data;
 				auto const& dataRight = right->right->data;
 
-				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newLeft = make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Black, std::move(left), leftRight);
 				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
 
 				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
