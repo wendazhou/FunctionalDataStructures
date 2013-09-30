@@ -8,6 +8,9 @@
 
 WENDA_FDS_NAMESPACE_BEGIN
 
+template<typename T>
+class intrusive_ptr;
+
 /**
 * This class implements an intrusive smart pointer.
 * In order for a type @p T to be used with the smart pointer,
@@ -19,11 +22,14 @@ template<typename T>
 class intrusive_ptr
 {
 	T* pointer;
+	template<typename U> friend class intrusive_ptr;
 public:
 	/**
 	* Initializes the @ref intrusive_ptr to a default value.
 	*/
-	intrusive_ptr() = default;
+	intrusive_ptr()
+		: pointer(nullptr)
+	{};
 
 	/**
 	* Initializes a new instance from the given @p pointer.
@@ -71,25 +77,23 @@ public:
 		other.pointer = nullptr;
 	}
 
-	/**
-    * Assignment copy operator.
-	*/
-	intrusive_ptr<T>& operator=(intrusive_ptr<T> const& other)
+	intrusive_ptr& operator=(intrusive_ptr<T> const& other)
 	{
 		using std::swap;
 
 		intrusive_ptr<T> temp(other);
-
 		swap(*this, temp);
+		return *this;
 	}
 
-	/**
-    * Assignment move operator.
-	*/
-	intrusive_ptr<T>& operator=(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
+	intrusive_ptr& operator=(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
 	{
+		using std::swap;
+
 		pointer = other.pointer;
 		other.pointer = nullptr;
+
+		return *this;
 	}
 
 	/**
@@ -97,7 +101,7 @@ public:
     * their respective pointer types are compatible.
     * @param other The pointer to be converted.
 	*/
-    template<typename U, typename SFINAE = typename std::enable_if<std::is_assignable<T*, U*>::value, void>::type>
+    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type>
 	intrusive_ptr(intrusive_ptr<U> const& other)
 		: pointer(other.pointer)
 	{
@@ -111,11 +115,38 @@ public:
     * Converts between @ref intrusive_ptr of compatible types.
     * This overload moves the values instead of copying them.
 	*/
-    template<typename U, typename SFINAE = typename std::enable_if<std::is_assignable<T*, U*>::value, void>::type>
+    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type> 
 	intrusive_ptr(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
+	}
+
+	/**
+    * Assignment copy conversion operator.
+	*/
+    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type>
+	intrusive_ptr<T>& operator=(intrusive_ptr<U> const& other)
+	{
+		using std::swap;
+
+		intrusive_ptr<T> temp(other);
+
+		swap(*this, temp);
+
+		return *this;
+	}
+
+	/**
+    * Assignment move conversion operator.
+	*/
+    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type> 
+	intrusive_ptr<T>& operator=(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
+	{
+		pointer = other.pointer;
+		other.pointer = nullptr;
+
+		return *this;
 	}
 
 	~intrusive_ptr()
@@ -167,7 +198,7 @@ public:
 	*/
 	explicit operator bool() const WENDA_NOEXCEPT
 	{
-		return pointer;
+		return pointer != nullptr;
 	}
 };
 
@@ -213,12 +244,41 @@ intrusive_ptr<T> make_intrusive(Args... args)
 	return intrusive_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+namespace detail
+{
+    template<typename T1, typename U1>
+	class const_cast_valid
+	{
+		template<typename T, typename U> static std::true_type test(typename std::add_pointer<decltype(const_cast<T*>(std::declval<U*>()))>::type);
+		template<typename T, typename U> static std::false_type test(...);
+	public:
+		typedef decltype(test<T1, U1>(nullptr)) type;
+		static const bool value = type::value;
+	};
+}
+
+template<typename T, typename U>
+intrusive_ptr<T> const_pointer_cast(intrusive_ptr<U> const& pointer) WENDA_NOEXCEPT
+{
+	static_assert(detail::const_cast_valid<T, U>::value, 
+	    "const pointer cast is valid only if the similar const_cast between the raw pointer types would be valid.");
+	return intrusive_ptr<T>(pointer);
+}
+
+template<typename T, typename U>
+intrusive_ptr<T> const_pointer_cast(intrusive_ptr<U>&& pointer) WENDA_NOEXCEPT
+{
+	static_assert(detail::const_cast_valid<T, U>::value, 
+	    "const pointer cast is valid only if the similar const_cast between the raw pointer types would be valid.");
+	return intrusive_ptr<T>(std::move(pointer));
+}
+
 class intrusive_refcount
 {
-	friend std::size_t add_reference(intrusive_refcount*);
-    friend std::size_t remove_reference(intrusive_refcount* obj);
+	friend std::size_t add_reference(intrusive_refcount const*);
+    friend std::size_t remove_reference(intrusive_refcount const* obj);
 
-	std::atomic_size_t counter;
+	mutable std::atomic_size_t counter;
 public:
 	intrusive_refcount() WENDA_NOEXCEPT
 		: counter(0)
@@ -231,12 +291,12 @@ public:
 	}
 };
 
-inline std::size_t add_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
+inline std::size_t add_reference(intrusive_refcount const* obj) WENDA_NOEXCEPT
 {
     return ++(obj->counter);
 }
 
-inline std::size_t remove_reference(intrusive_refcount* obj) WENDA_NOEXCEPT
+inline std::size_t remove_reference(intrusive_refcount const* obj) WENDA_NOEXCEPT
 {
 	return --(obj->counter);
 }

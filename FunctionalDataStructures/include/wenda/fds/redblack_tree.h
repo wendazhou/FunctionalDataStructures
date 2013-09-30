@@ -6,6 +6,7 @@
 #include <functional>
 #include <utility>
 #include <iterator>
+#include <tuple>
 
 #include "intrusive_ptr.h"
 
@@ -24,25 +25,44 @@ namespace detail
 	class redblack_tree_iterator;
 
     template<typename T>
+	class redblack_node;
+
+    template<typename T, typename U, typename Compare>
+	std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> 
+	insert_impl(redblack_node<T> const* tree, U&& value, Compare const& compare);
+
+    template<typename T, typename U>
+	intrusive_ptr<redblack_node<T>> 
+	balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right);
+
+    template<typename T>
+	intrusive_ptr<redblack_node<T>> make_black(redblack_node<T> const*);
+
+    template<typename T>
 	class redblack_node
 		: public intrusive_refcount
 	{
 		friend class redblack_tree_iterator<T>;
 
+		template<typename T1, typename U, typename Compare> 
+		friend std::tuple<intrusive_ptr<const redblack_node<T1>>, redblack_node<T1> const*, bool> 
+		insert_impl(redblack_node<T1> const*, U&&, Compare const&);
+
+        template<typename T1, typename U>
+        friend intrusive_ptr<redblack_node<T1>> 
+	    balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T1>> left, intrusive_ptr<const redblack_node<T1>> right);
+
+	    friend intrusive_ptr<redblack_node<T>> make_black<>(redblack_node<T> const*);
+
 		T data;
 		NodeColour colour;
-		redblack_node<T>* parent;
-		intrusive_ptr<redblack_node<T>> left;
-		intrusive_ptr<redblack_node<T>> right;
+		intrusive_ptr<const redblack_node<T>> left;
+		intrusive_ptr<const redblack_node<T>> right;
 	public:
-		bool is_left_child() const WENDA_NOEXCEPT
+		redblack_node(T data, NodeColour colour, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right)
+			: data(std::move(data)), colour(std::move(colour)),
+			left(std::move(left)), right(std::move(right))
 		{
-			return (parent != nullptr) && (parent->left == this);
-		}
-
-		bool is_right_child() const WENDA_NOEXCEPT
-		{
-			return (parent != nullptr) && (parent->right == this);
 		}
 
 		redblack_node<T> const* minimum() const WENDA_NOEXCEPT
@@ -55,28 +75,146 @@ namespace detail
 			return right == nullptr ? this : right->maximum();
 		}
 
-		redblack_node<T> const* successor() const WENDA_NOEXCEPT
+        template<typename U, typename Compare>
+		redblack_node<T> const* find(U&& value, Compare const& comp) const WENDA_NOEXCEPT
 		{
-			if (right != null)
+			if (comp(value, data))
 			{
-				return right->minimum();
+				return left == nullptr ? nullptr : left->find(std::forward<U>(value), comp);
 			}
-
-			if (is_left_child())
+			else if (comp(data, value))
 			{
-				return parent;
+			    return right == nullptr ? nullptr : right->find(std::forward<U>(value), comp);
 			}
-
-			auto next = this;
-
-			do
+			else
 			{
-				next = next->parent;
-			} while ((next != nullptr) && next->is_right_child());
-
-			return next == nullptr ? nullptr : next->parent;
+				return this;
+			}
 		}
+
 	};
+
+    template<typename T>
+	intrusive_ptr<redblack_node<T>> make_black(redblack_node<T> const* pointer)
+	{
+		return make_intrusive<redblack_node<T>>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
+	}
+
+    template<typename T, typename U>
+	intrusive_ptr<redblack_node<T>> 
+	balance(NodeColour colour, U&& value, intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right)
+	{
+		if (colour != NodeColour::Black)
+		{
+			return make_intrusive<redblack_node<T>>(std::forward<U>(value), colour, std::move(left), std::move(right));
+		}
+
+		if (left && left->colour == NodeColour::Red)
+		{
+			if (left->left && left->left->colour == NodeColour::Red)
+			{
+				auto const& leftLeft = left->left->left;
+				auto const& leftRight = left->left->right;
+				auto const& rightLeft = left->right;
+				auto const& rightRight = right;
+
+				auto const& dataLeft = left->left->data;
+				auto const& dataMiddle = left->data;
+				auto const& dataRight = value;
+
+				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+
+				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+			}
+			else if (left->right && left->right->colour == NodeColour::Red)
+			{
+				auto const& leftLeft = left->left;
+				auto const& leftRight = left->right->left;
+				auto const& rightLeft = left->right->right;
+				auto const& rightRight = right;
+
+				auto const& dataLeft = left->data;
+				auto const& dataMiddle = left->right->data;
+				auto const& dataRight = value;
+
+				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+
+				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+			}
+		}
+
+		if (right && right->colour == NodeColour::Red)
+		{
+			if (right->left && right->left->colour == NodeColour::Red)
+			{
+				auto const& leftLeft = left;
+				auto const& leftRight = right->left->left;
+				auto const& rightLeft = right->left->right;
+				auto const& rightRight = right->right;
+
+				auto const& dataLeft = value;
+				auto const& dataMiddle = right->left->data;
+				auto const& dataRight = right->data;
+
+				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+
+				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+			}
+			else if (right->right && right->right->colour == NodeColour::Red)
+			{
+				auto const& leftLeft = left;
+				auto const& leftRight = right->left;
+				auto const& rightLeft = right->right->left;
+				auto const& rightRight = right->right->right;
+
+				auto const& dataLeft = value;
+				auto const& dataMiddle = right->data;
+				auto const& dataRight = right->right->data;
+
+				auto newLeft = make_intrusive<redblack_node<T>>(dataLeft, NodeColour::Black, leftLeft, leftRight);
+				auto newRight = make_intrusive<redblack_node<T>>(dataRight, NodeColour::Black, rightLeft, rightRight);
+
+				return make_intrusive<redblack_node<T>>(dataMiddle, NodeColour::Red, std::move(newLeft), std::move(newRight));
+			}
+		}
+
+		return make_intrusive<redblack_node<T>>(std::forward<U>(value), colour, std::move(left), std::move(right));
+	}
+
+    template<typename T, typename U, typename Compare>
+	std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> 
+	insert_impl(redblack_node<T> const* tree, U&& value, Compare const& compare)
+	{
+		typedef std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> return_t;
+		using std::get;
+
+		if (!tree)
+		{
+			intrusive_ptr<const redblack_node<T>> newTree(make_intrusive<redblack_node<T>>(std::forward<U>(value), NodeColour::Red, nullptr, nullptr));
+			auto ptr = newTree.get();
+			return return_t(std::move(newTree), ptr, true);
+		}
+
+		if (compare(value, tree->data))
+		{
+			auto ins = insert_impl(tree->left.get(), std::forward<U>(value), compare);
+			auto newTree = balance(tree->colour, tree->data, std::move(get<0>(ins)), tree->right);
+			return return_t(std::move(newTree), get<1>(ins), get<2>(ins));
+		}
+		else if (compare(tree->data, value))
+		{
+			auto ins = insert_impl(tree->right.get(), std::forward<U>(value), compare);
+			auto newTree = balance(tree->colour, tree->data, tree->left, std::move(get<0>(ins)));
+			return return_t(std::move(newTree), get<1>(ins), get<2>(ins));
+		}
+		else
+		{
+			return return_t(intrusive_ptr<const redblack_node<T>>(tree), tree, false);
+		}
+	}
 
     template<typename T>
 	class redblack_tree_iterator
@@ -85,21 +223,9 @@ namespace detail
 		redblack_node<T> const* current;
 	public:
 		redblack_tree_iterator() = default;
-		redblack_tree_iterator(redblack_node<T> const* node)
+		explicit redblack_tree_iterator(redblack_node<T> const* node)
 			: current(node)
 		{}
-
-		redblack_tree_iterator<T>& operator++() WENDA_NOEXCEPT
-		{
-			current = current->successor();
-		}
-
-		redblack_tree_iterator operator++(int)
-		{
-			auto result = *this;
-			current = current->successor();
-			return result;
-		}
 
 		T const& operator*() const WENDA_NOEXCEPT
 		{
@@ -111,27 +237,46 @@ namespace detail
 			return std::addressof(current->data);
 		}
 
-		bool operator==(redblack_tree_iterator<T> const& other)
+		bool operator==(redblack_tree_iterator<T> const& other) WENDA_NOEXCEPT
 		{
 			return current == other.current;
 		}
 
-		bool operator!=(redblack_tree_iterator<T> const& other)
+		bool operator!=(redblack_tree_iterator<T> const& other) WENDA_NOEXCEPT
 		{
 			return current != other.current;
 		}
 	};
 }
 
+template<typename T>
+struct is_transparent
+	: std::false_type
+{};
+
+template<>
+struct is_transparent<std::less<>>
+	: std::true_type
+{};
+
 template<typename T, typename Compare = std::less<> >
 class redblack_tree
 {
-	intrusive_ptr<detail::redblack_node<T>> root;
 public:
 	typedef T value_type;
 	typedef detail::redblack_tree_iterator<T> iterator;
+private:
+	intrusive_ptr<detail::redblack_node<T>> root;
 
-	redblack_tree()
+	explicit redblack_tree(intrusive_ptr<detail::redblack_node<T>> const& root)
+		: root(root)
+    {}
+
+	explicit redblack_tree(intrusive_ptr<detail::redblack_node<T>>&& root)
+		: root(std::move(root))
+    {}
+public:
+	redblack_tree() WENDA_NOEXCEPT
 		: root(nullptr)
 	{}
 
@@ -143,9 +288,26 @@ public:
 		: root(std::move(other.root))
 	{}
 
+	iterator find(T const& value) const WENDA_NOEXCEPT
+	{
+		if (root)
+		{
+			return iterator(root->find(value, Compare()));
+		}
+
+		return end();
+	}
+
 	iterator begin() const WENDA_NOEXCEPT
 	{
-		return iterator(root->minimum());
+		if (root)
+		{
+		    return iterator(root->minimum());
+		}
+		else
+		{
+			return iterator(nullptr);
+		}
 	}
 
 	iterator cbegin() const WENDA_NOEXCEPT
@@ -155,7 +317,7 @@ public:
 
 	iterator end() const WENDA_NOEXCEPT
 	{
-		return iterator(root->maximum());
+		return iterator(nullptr);
 	}
 
 	iterator cend() const WENDA_NOEXCEPT
@@ -166,6 +328,32 @@ public:
 	bool empty() const WENDA_NOEXCEPT
 	{
 		return root == nullptr;
+	}
+
+    template<typename U>
+	std::tuple<redblack_tree<T>, iterator, bool> insert(U&& value) const
+	{
+		typedef std::tuple<redblack_tree<T>, iterator, bool> return_t;
+
+		intrusive_ptr<const detail::redblack_node<T>> newRoot;
+		detail::redblack_node<T> const* element;
+		bool found;
+
+		std::tie(newRoot, element, found) = detail::insert_impl(root.get(), std::forward<U>(value), Compare());
+
+		auto blackened = detail::make_black(newRoot.get());
+
+		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), found);
+	}
+
+	iterator find(T const& value)
+	{
+		if (root)
+		{
+			return iterator(root->find(value, Compare()));
+		}
+
+		return iterator(nullptr);
 	}
 };
 
