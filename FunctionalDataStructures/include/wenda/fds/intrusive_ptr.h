@@ -21,6 +21,7 @@ class intrusive_ptr;
 template<typename T>
 class intrusive_ptr
 {
+protected:
 	T* pointer;
 	template<typename U> friend class intrusive_ptr;
 public:

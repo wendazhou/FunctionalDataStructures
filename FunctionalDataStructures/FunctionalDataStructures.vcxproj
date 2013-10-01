@@ -76,6 +76,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\wenda\fds\FDS_common.h" />
+    <ClInclude Include="include\wenda\fds\packed_ptr.h" />
     <ClInclude Include="include\wenda\fds\intrusive_ptr.h" />
     <ClInclude Include="include\wenda\fds\forward_list.h" />
     <ClInclude Include="include\wenda\fds\redblack_tree.h" />

@@ -27,5 +27,8 @@
     <ClInclude Include="include\wenda\fds\redblack_tree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\wenda\fds\packed_ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
