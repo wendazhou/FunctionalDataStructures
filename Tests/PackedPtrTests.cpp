@@ -23,7 +23,7 @@ namespace tests
 			Assert::IsTrue(ptr != nullptr);
 			Assert::AreEqual(5, *ptr);
 
-			delete ptr;
+			delete_ptr(ptr);
 		}
 
 		TEST_METHOD(PackedPtr_Can_Compare)
@@ -33,7 +33,7 @@ namespace tests
 
 			Assert::IsTrue(ptr == ptr2);
 
-			delete ptr;
+			delete_ptr(ptr);
 		}
 
 		TEST_METHOD(PackedPtr_Can_Store_Value)
@@ -44,7 +44,7 @@ namespace tests
 			Assert::AreEqual(2u, ptr.get_value());
 			Assert::AreEqual(5, *ptr);
 
-			delete ptr;
+			delete_ptr(ptr);
 		}
 
 		TEST_METHOD(PackedPtr_Can_Modify_Object_Through_Ptr)
@@ -54,7 +54,7 @@ namespace tests
 
 			Assert::AreEqual(10, *ptr);
 
-			delete ptr;
+			delete_ptr(ptr);
 		}
 
 		TEST_METHOD(PackedPtr_Value_Set_Does_Not_Compare_Equal)
@@ -82,6 +82,21 @@ namespace tests
 
 			Assert::IsTrue(ptr != nullptr);
 			Assert::IsFalse(ptr == nullptr);
+		}
+
+		TEST_METHOD(PackedPtr_Nullptr_Evaluates_To_False)
+		{
+			packed_ptr<int> ptr{ nullptr };
+			
+			Assert::IsFalse(static_cast<bool>(ptr));
+		}
+
+		TEST_METHOD(PackedPtr_Nullptr_With_Value_Evaluates_To_False)
+		{
+			packed_ptr<int> ptr{ nullptr };
+			ptr.set_value(2);
+
+			Assert::IsFalse(static_cast<bool>(ptr));
 		}
 	};
 }

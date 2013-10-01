@@ -14,4 +14,8 @@
 #define WENDA_NOEXCEPT throw()
 #endif
 
+#ifndef WENDA_CONSTEXPR
+#define WENDA_CONSTEXPR
+#endif
+
 #endif // WENDA_FDS_FDS_COMMON_H_INCLUDED
