@@ -153,6 +153,18 @@ void delete_ptr(packed_ptr<T>& ptr) WENDA_NOEXCEPT
 	delete static_cast<T const*>(ptr);
 }
 
+template<typename T>
+std::size_t add_reference(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
+{
+	return add_reference(static_cast<T const*>(ptr));
+}
+
+template<typename T>
+std::size_t remove_refence(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
+{
+	return remove_refence(static_cast<T const*>(ptr));
+}
+
 WENDA_FDS_NAMESPACE_END
 
 #endif // WENDA_FDS_PACKED_PTR_H_INCLUDED

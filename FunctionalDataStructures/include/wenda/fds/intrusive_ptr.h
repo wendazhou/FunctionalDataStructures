@@ -9,7 +9,13 @@
 WENDA_FDS_NAMESPACE_BEGIN
 
 template<typename T>
-class intrusive_ptr;
+struct default_deleter
+{
+	void operator()(T const* pointer) const
+	{
+		delete pointer;
+	}
+};
 
 /**
 * This class implements an intrusive smart pointer.
@@ -18,13 +24,19 @@ class intrusive_ptr;
 * that can be invoked with pointers to @p T.
 * @tparam T The type pointed to by this pointer. It may be an incomplete type.
 */
-template<typename T>
+template<typename T, typename pointer_t = typename std::add_pointer<T>::type, 
+	typename const_pointer_t = typename std::add_pointer<typename std::add_const<T>::type>::type, 
+	typename Deleter = default_deleter<typename std::decay<T>::type>>
 class intrusive_ptr
 {
 protected:
-	T* pointer;
-	template<typename U> friend class intrusive_ptr;
+	pointer_t pointer;
+	template<typename U, typename V, typename W, typename Z> friend class intrusive_ptr;
 public:
+	typedef typename std::add_reference<T>::type reference;
+	typedef typename std::add_reference<typename std::add_const<T>>::type const_reference;
+	typedef intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> this_type;
+
 	/**
 	* Initializes the @ref intrusive_ptr to a default value.
 	*/
@@ -60,7 +72,7 @@ public:
     * Copies the pointer, and if @p other is not equivalent to null,
     * adds a reference to the pointed-to object.
 	*/
-	intrusive_ptr(intrusive_ptr<T> const& other)
+	intrusive_ptr(this_type const& other)
 		: pointer(other.pointer)
 	{
 		if (pointer)
@@ -72,13 +84,13 @@ public:
 	/**
     * Move constructor. Moves the pointer, and nulls the source object.
 	*/
-	intrusive_ptr(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
+	intrusive_ptr(this_type&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
 	}
 
-	intrusive_ptr& operator=(intrusive_ptr<T> const& other)
+	intrusive_ptr& operator=(this_type const& other)
 	{
 		using std::swap;
 
@@ -87,7 +99,7 @@ public:
 		return *this;
 	}
 
-	intrusive_ptr& operator=(intrusive_ptr<T>&& other) WENDA_NOEXCEPT
+	intrusive_ptr& operator=(this_type&& other) WENDA_NOEXCEPT
 	{
 		using std::swap;
 
@@ -102,8 +114,9 @@ public:
     * their respective pointer types are compatible.
     * @param other The pointer to be converted.
 	*/
-    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type>
-	intrusive_ptr(intrusive_ptr<U> const& other)
+    template<typename U, typename UPtr, typename UConstPtr,
+		typename SFINAE = std::enable_if<std::is_convertible<UPtr, PtrType>::value>::type>
+	intrusive_ptr(intrusive_ptr<U, UPtr, UConstPtr, Deleter> const& other)
 		: pointer(other.pointer)
 	{
 		if (pointer)
@@ -116,8 +129,9 @@ public:
     * Converts between @ref intrusive_ptr of compatible types.
     * This overload moves the values instead of copying them.
 	*/
-    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type> 
-	intrusive_ptr(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
+    template<typename U, typename UPtr, typename UConstPtr, 
+		typename SFINAE = std::enable_if<std::is_convertible<UPtr, pointer_t>::value>::type> 
+	intrusive_ptr(intrusive_ptr<U, UPtr, UConstPtr, Deleter>&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
@@ -126,8 +140,9 @@ public:
 	/**
     * Assignment copy conversion operator.
 	*/
-    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type>
-	intrusive_ptr<T>& operator=(intrusive_ptr<U> const& other)
+    template<typename U, typename UPtr, typename UConstPtr, 
+		typename SFINAE = std::enable_if<std::is_convertible<UPtr, pointer_t>::value>::type>
+	this_type& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter> const& other)
 	{
 		using std::swap;
 
@@ -141,8 +156,9 @@ public:
 	/**
     * Assignment move conversion operator.
 	*/
-    template<typename U, typename SFINAE = std::enable_if<std::is_convertible<U*, T*>::value, void>::type> 
-	intrusive_ptr<T>& operator=(intrusive_ptr<U>&& other) WENDA_NOEXCEPT
+    template<typename U, typename UPtr, typename UConstPtr, 
+		typename SFINAE = std::enable_if<std::is_convertible<UPtr, pointer_t>::value>::type>
+	this_type& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter>&& other) WENDA_NOEXCEPT
 	{
 		pointer = other.pointer;
 		other.pointer = nullptr;
@@ -157,7 +173,8 @@ public:
 		    auto refCount = remove_reference(pointer);
 		    if (refCount == 0)
 		    {
-		    	delete pointer;
+				Deleter deleter;
+				deleter(pointer);
 		    }
 		}
 	}
@@ -166,32 +183,32 @@ public:
     * Gets the underlying naked pointer.
     * @returns The underlying pointer.
 	*/
-	T* get() WENDA_NOEXCEPT { return pointer; }
+	pointer_t get() WENDA_NOEXCEPT { return pointer; }
 	/**
     * Gets the underlying naked pointer.
     * @returns The underlying pointer.
 	*/
-	T const* get() const WENDA_NOEXCEPT { return pointer; }
+	const_pointer_t get() const WENDA_NOEXCEPT { return pointer; }
 
 	/**
     * Dereferences this pointer.
     * @returns A reference to the pointed to object.
 	*/
-	T& operator*() WENDA_NOEXCEPT { return *pointer; }
+	reference operator*() WENDA_NOEXCEPT { return *pointer; }
 	/**
     * Dereferences this pointer.
     * @returns A const reference to the pointed to object.
 	*/
-	T const& operator*() const WENDA_NOEXCEPT { return *pointer; }
+	const_reference operator*() const WENDA_NOEXCEPT { return *pointer; }
 
 	/**
     * Accesses the members of the pointed to object.
 	*/
-	T* operator->() WENDA_NOEXCEPT { return pointer; }
+	pointer_t operator->() WENDA_NOEXCEPT { return pointer; }
 	/**
     * Accesses the const members of the pointed to object.
 	*/
-	T const* operator->() const WENDA_NOEXCEPT { return pointer; }
+	const_pointer_t operator->() const WENDA_NOEXCEPT { return pointer; }
 
 	/**
     * Explicit conversion to bool.
