@@ -35,5 +35,8 @@
     <ClCompile Include="PackedPtrTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IntrusivePackedPtrTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

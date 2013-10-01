@@ -65,12 +65,12 @@ public:
 	{
 	}
 
-	explicit operator T*() WENDA_NOEXCEPT
+	T* get()
 	{
 		return get_pointer();
 	}
 
-	explicit operator T const*() const WENDA_NOEXCEPT
+	T const* get() const
 	{
 		return get_pointer();
 	}
@@ -148,22 +148,36 @@ bool operator!=(std::nullptr_t, packed_ptr<T> const& right) WENDA_NOEXCEPT
 }
 
 template<typename T>
-void delete_ptr(packed_ptr<T>& ptr) WENDA_NOEXCEPT
+void delete_ptr(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
 {
-	delete static_cast<T const*>(ptr);
+	delete ptr.get();
 }
 
 template<typename T>
 std::size_t add_reference(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
 {
-	return add_reference(static_cast<T const*>(ptr));
+	return add_reference(ptr.get());
 }
 
 template<typename T>
-std::size_t remove_refence(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
+std::size_t remove_reference(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
 {
-	return remove_refence(static_cast<T const*>(ptr));
+	return remove_reference(ptr.get());
 }
+
+template<typename T>
+struct packed_ptr_deleter
+{
+	void operator()(packed_ptr<T> const& pointer) const
+	{
+		delete_ptr(pointer);
+	}
+
+	void operator()(packed_ptr<const T> const& pointer) const
+	{
+		delete_ptr(pointer);
+	}
+};
 
 WENDA_FDS_NAMESPACE_END
 

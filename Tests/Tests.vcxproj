@@ -91,6 +91,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="IntrusivePackedPtrTests.cpp" />
     <ClCompile Include="ListTests.cpp" />
     <ClCompile Include="PackedPtrTests.cpp" />
     <ClCompile Include="RedBlackTreeTests.cpp" />

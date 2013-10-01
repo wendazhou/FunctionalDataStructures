@@ -30,5 +30,8 @@
     <ClInclude Include="include\wenda\fds\packed_ptr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\wenda\fds\intrusive_packed_ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

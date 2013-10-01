@@ -35,7 +35,6 @@ protected:
 public:
 	typedef typename std::add_reference<T>::type reference;
 	typedef typename std::add_reference<typename std::add_const<T>>::type const_reference;
-	typedef intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> this_type;
 
 	/**
 	* Initializes the @ref intrusive_ptr to a default value.
@@ -72,7 +71,7 @@ public:
     * Copies the pointer, and if @p other is not equivalent to null,
     * adds a reference to the pointed-to object.
 	*/
-	intrusive_ptr(this_type const& other)
+	intrusive_ptr(intrusive_ptr const& other)
 		: pointer(other.pointer)
 	{
 		if (pointer)
@@ -84,22 +83,22 @@ public:
 	/**
     * Move constructor. Moves the pointer, and nulls the source object.
 	*/
-	intrusive_ptr(this_type&& other) WENDA_NOEXCEPT
+	intrusive_ptr(intrusive_ptr&& other) WENDA_NOEXCEPT
 		: pointer(other.pointer)
 	{
 		other.pointer = nullptr;
 	}
 
-	intrusive_ptr& operator=(this_type const& other)
+	intrusive_ptr& operator=(intrusive_ptr const& other)
 	{
 		using std::swap;
 
-		intrusive_ptr<T> temp(other);
+		intrusive_ptr temp(other);
 		swap(*this, temp);
 		return *this;
 	}
 
-	intrusive_ptr& operator=(this_type&& other) WENDA_NOEXCEPT
+	intrusive_ptr& operator=(intrusive_ptr&& other) WENDA_NOEXCEPT
 	{
 		using std::swap;
 
@@ -142,11 +141,11 @@ public:
 	*/
     template<typename U, typename UPtr, typename UConstPtr, 
 		typename SFINAE = std::enable_if<std::is_convertible<UPtr, pointer_t>::value>::type>
-	this_type& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter> const& other)
+	intrusive_ptr& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter> const& other)
 	{
 		using std::swap;
 
-		intrusive_ptr<T> temp(other);
+		intrusive_ptr temp(other);
 
 		swap(*this, temp);
 
@@ -158,7 +157,7 @@ public:
 	*/
     template<typename U, typename UPtr, typename UConstPtr, 
 		typename SFINAE = std::enable_if<std::is_convertible<UPtr, pointer_t>::value>::type>
-	this_type& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter>&& other) WENDA_NOEXCEPT
+	intrusive_ptr& operator=(intrusive_ptr<U, UPtr, UConstPtr, Deleter>&& other) WENDA_NOEXCEPT
 	{
 		pointer = other.pointer;
 		other.pointer = nullptr;
@@ -220,38 +219,40 @@ public:
 	}
 };
 
-template<typename T, typename U>
-bool operator==(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator==(intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& left, 
+	intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& right) WENDA_NOEXCEPT
 {
 	return left.get() == right.get();
 }
 
-template<typename T>
-bool operator==(intrusive_ptr<T> const& left, std::nullptr_t) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator==(intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& left, std::nullptr_t) WENDA_NOEXCEPT
 {
 	return left.get() == nullptr;
 }
 
-template<typename T>
-bool operator==(std::nullptr_t, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator==(std::nullptr_t, intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& right) WENDA_NOEXCEPT
 {
 	return nullptr == right.get();
 }
 
-template<typename T, typename U>
-bool operator!=(intrusive_ptr<T> const& left, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator!=(intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& left, 
+	intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& right) WENDA_NOEXCEPT
 {
 	return left.get() != right.get();
 }
 
-template<typename T>
-bool operator!=(intrusive_ptr<T> const& left, std::nullptr_t) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator!=(intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& left, std::nullptr_t) WENDA_NOEXCEPT
 {
 	return left.get() != nullptr;
 }
 
-template<typename T>
-bool operator!=(std::nullptr_t, intrusive_ptr<T> const& right) WENDA_NOEXCEPT
+template<typename T, typename pointer_t, typename const_pointer_t, typename Deleter>
+bool operator!=(std::nullptr_t, intrusive_ptr<T, pointer_t, const_pointer_t, Deleter> const& right) WENDA_NOEXCEPT
 {
 	return nullptr != right.get();
 }

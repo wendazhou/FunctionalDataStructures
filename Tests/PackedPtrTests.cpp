@@ -2,6 +2,7 @@
 #include <CppUnitTest.h>
 
 #include <wenda/fds/packed_ptr.h>
+#include <wenda/fds/intrusive_ptr.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace WENDA_FDS_NAMESPACE;
@@ -97,6 +98,18 @@ namespace tests
 			ptr.set_value(2);
 
 			Assert::IsFalse(static_cast<bool>(ptr));
+		}
+
+		TEST_METHOD(PackedPtr_To_IntrusiveRefCount_Can_Add_Reference)
+		{
+			packed_ptr<intrusive_refcount> ptr = new intrusive_refcount();
+
+			int refCount = add_reference(ptr);
+			Assert::AreEqual(1, refCount);
+			refCount = remove_reference(ptr);
+			Assert::AreEqual(0, refCount);
+			
+			delete_ptr(ptr);
 		}
 	};
 }
