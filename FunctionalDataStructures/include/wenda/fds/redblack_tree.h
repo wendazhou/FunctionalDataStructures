@@ -24,10 +24,21 @@ namespace detail
 	*/
 	enum class NodeColour
 	{
-        Black,
-        Red,
-        DoubleBlack
+        NegativeBlack = -1,
+        Red = 0,
+        Black = 1,
+        DoubleBlack = 2
 	};
+    
+	inline NodeColour operator+(NodeColour left, NodeColour right)
+	{
+		return NodeColour(static_cast<int>(left) + static_cast<int>(right));
+	}
+
+	inline NodeColour operator-(NodeColour left, NodeColour right)
+	{
+		return NodeColour(static_cast<int>(left) - static_cast<int>(right));
+	}
 
     template<typename T>
 	class redblack_tree_iterator;
@@ -41,6 +52,15 @@ namespace detail
 
     template<typename T>
 	intrusive_ptr<const redblack_node<T>> make_black(redblack_node<T> const*);
+
+    template<typename T>
+	NodeColour colour(redblack_node<T> const* node);
+
+    template<typename T>
+	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node);
+
+    template<typename T>
+	NodeColour colour(intrusive_ptr<const redblack_node<T>> const& node);
 
 	/**
     * This class represents a node in a red-black tree.
@@ -62,6 +82,9 @@ namespace detail
 			redblack_node<T1> const*&);
 
 		friend intrusive_ptr<const redblack_node<T>> make_black<>(redblack_node<T> const*);
+		friend NodeColour colour<>(redblack_node<T> const*);
+		friend NodeColour colour<>(intrusive_ptr<redblack_node<T>> const&);
+		friend NodeColour colour<>(intrusive_ptr<const redblack_node<T>> const&);
 
 		T data; ///< The data held by the node
 		NodeColour colour; ///< The colour of the node
@@ -121,11 +144,30 @@ namespace detail
         * Sets this node to a given colour.
 		*/
 		void set_colour(NodeColour colour) { this->colour = colour; }
-		/**
-        * Gets the current colour of the node.
-		*/
-		NodeColour get_colour() const { return this->colour; }
 	};
+
+    template<typename T>
+	NodeColour colour(redblack_node<T> const* node)
+	{
+		if (node)
+		{
+		    return node->colour;
+		}
+
+		return NodeColour::Black;
+	}
+
+    template<typename T>
+	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node)
+	{
+		return colour(node.get());
+    }
+
+    template<typename T>
+	NodeColour colour(intrusive_ptr<const redblack_node<T>> const& node)
+    {
+		return colour(node.get());
+    }
 
 	/**
     * Constructs a new black node from the given node, or if it is already black, returns the node.
@@ -199,18 +241,18 @@ namespace detail
     * @returns A pointer to an equivalent rebalanced tree.
 	*/
     template<typename T, typename U>
-	intrusive_ptr<redblack_node<T>> balance(NodeColour colour, U&& value, 
+	intrusive_ptr<redblack_node<T>> balance(NodeColour node_colour, U&& value, 
 		intrusive_ptr<const redblack_node<T>> left, intrusive_ptr<const redblack_node<T>> right,
 		redblack_node<T> const*& inserted)
 	{
-		if (colour != NodeColour::Black)
+		if (node_colour != NodeColour::Black)
 		{
-			return make_intrusive<redblack_node<T>>(std::forward<U>(value), colour, std::move(left), std::move(right));
+			return make_intrusive<redblack_node<T>>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 		}
 
-		if (left && left->colour == NodeColour::Red)
+		if (left && colour(left) == NodeColour::Red)
 		{
-			if (left->left && left->left->colour == NodeColour::Red)
+			if (left->left && colour(left->left) == NodeColour::Red)
 			{
 				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
@@ -225,7 +267,7 @@ namespace detail
 
 				return balance_create_middle<T>(std::move(newLeft), std::move(newRight), left->data);
 			}
-			else if (left->right && left->right->colour == NodeColour::Red)
+			else if (left->right && colour(left->right) == NodeColour::Red)
 			{
 				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
@@ -244,9 +286,9 @@ namespace detail
 			}
 		}
 
-		if (right && right->colour == NodeColour::Red)
+		if (right && colour(right) == NodeColour::Red)
 		{
-			if (right->left && right->left->colour == NodeColour::Red)
+			if (right->left && colour(right->left) == NodeColour::Red)
 			{
 				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
@@ -263,7 +305,7 @@ namespace detail
 
 				return retval;
 			}
-			else if (right->right && right->right->colour == NodeColour::Red)
+			else if (right->right && colour(right->right) == NodeColour::Red)
 			{
 				intrusive_ptr<redblack_node<T>> newLeft, newRight;
 
@@ -280,7 +322,7 @@ namespace detail
 			}
 		}
 
-		return make_intrusive<redblack_node<T>>(std::forward<U>(value), colour, std::move(left), std::move(right));
+		return make_intrusive<redblack_node<T>>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 	}
 
 	/**
@@ -326,6 +368,62 @@ namespace detail
 		else
 		{
 			return return_t(intrusive_ptr<const redblack_node<T>>(tree), tree, false);
+		}
+	}
+
+    template<typename T>
+	intrusive_ptr<const redblack_node<T>> remove_node(redblack_node<T> const* node)
+	{
+		if (node->left && node->right)
+		{
+            // two children case
+            // remove the maximum descendant of the left child,
+            // and write its value into the current node.
+			auto max = node->left->maximum();
+
+			auto removed = remove_node(max);
+
+			auto newLeft = make_intrusive<redblack_node<T>>(node->left->data, node->left->colour, 
+				node->left->value, node->left->left, removed);
+
+			return make_intrusive<redblack_node<T>>(max->data, node->colour, newLeft, node->right);
+		}
+		else if (node->left || node->right)
+		{
+			auto child = node->left ? node->left : node->right;
+			return make_intrusive<redblack_node<T>>(child->data, NodeColour::Black, nullptr, nullptr);
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+    template<typename T, typename U, typename Compare>
+	std::tuple<intrusive_ptr<const redblack_node<T>>, redblack_node<T> const*, bool> 
+	erase(redblack_node<T> const* tree, U&& value, Compare const& compare)
+	{
+		if (!tree)
+		{
+			return std::make_tuple(nullptr, nullptr, false);
+		}
+
+		intrusive_ptr<const redblack_node<T>> newTree;
+		redblack_node<T> const* iterator;
+		bool deleted;
+
+		if (compare(value, tree->data))
+		{
+			std::tie(newTree, iterator, deleted) = erase(tree->left.get(), std::forward<U>(value), compare);
+		}
+		else if (compare(tree->data, value))
+		{
+			std::tie(newTree, iterator, deleted) = erase(tree->right.get(), std::forward<U>(value), compare);
+		}
+		else
+		{
+			deleted = true;
+            
 		}
 	}
 
