@@ -7,6 +7,7 @@
 #include <utility>
 #include <iterator>
 #include <tuple>
+#include <cstdint>
 
 #include "intrusive_ptr.h"
 #include "intrusive_packed_ptr.h"
@@ -24,6 +25,7 @@ namespace detail
     * This enum represents the colour of a node in the red-black tree.
 	*/
 	enum class NodeColour
+		: std::uint_fast32_t
 	{
         Red = 0,
         Black = 1,
@@ -133,11 +135,6 @@ namespace detail
 				return this;
 			}
 		}
-
-		/**
-        * Sets this node to a given colour.
-		*/
-		void set_colour(NodeColour colour) { this->colour = colour; }
 	};
 	
 	template<typename T, typename U>
@@ -172,12 +169,8 @@ namespace detail
     template<typename T>
 	const_intrusive_rb_ptr<T> make_black(const_rb_pointer<T> pointer)
 	{
-		if (colour(pointer) == NodeColour::Black)
-		{
-			return const_intrusive_rb_ptr<T>(pointer);
-		}
-
-		return make_redblack_node<T>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
+		pointer.set_value(static_cast<std::uint_fast32_t>(NodeColour::Black));
+		return pointer;
 	}
 
 	/**
@@ -611,11 +604,6 @@ public:
 		detail::const_intrusive_rb_ptr<T> blackened;
 
 		blackened = detail::make_black(newRoot.get());
-
-		if (element == newRoot.get())
-		{
-			element = blackened.get();
-		}
 
 		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), inserted);
 	}
