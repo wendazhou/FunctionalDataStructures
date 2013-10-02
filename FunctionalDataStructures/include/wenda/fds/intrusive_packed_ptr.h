@@ -22,7 +22,7 @@ public:
 	* Default initializes this instance of @ref intrusive_packed_ptr.
 	* This initializes the pointer to null and the packed integral value to 0.
 	*/
-	intrusive_packed_ptr()
+	intrusive_packed_ptr() WENDA_NOEXCEPT
 		: intrusive_ptr()
 	{}
 
@@ -30,7 +30,7 @@ public:
 	* Initializes the @ref intrusive_packed_ptr from a nullptr.
 	* This initializes the pointer to null and the packed integral value to 0.
 	*/
-	intrusive_packed_ptr(std::nullptr_t)
+	intrusive_packed_ptr(std::nullptr_t) WENDA_NOEXCEPT
 		: intrusive_ptr(nullptr)
 	{}
 
@@ -40,6 +40,14 @@ public:
 	* an integral value of 0.
 	*/
 	intrusive_packed_ptr(T* pointer)
+		: intrusive_ptr(pointer)
+	{}
+
+	/**
+	* Initializes this instance from the given @ref packed_ptr.
+	* @param pointer The @ref packed_pointer from which to initialize @ref intrusive_packed_ptr.
+	*/
+	intrusive_packed_ptr(packed_ptr<T> pointer)
 		: intrusive_ptr(pointer)
 	{}
 
@@ -56,7 +64,7 @@ public:
 	* Move constructor for @ref intrusive_packed_ptr.
 	* Copies both the pointer and the packed integral value.
 	*/
-	intrusive_packed_ptr(intrusive_packed_ptr&& other)
+	intrusive_packed_ptr(intrusive_packed_ptr&& other) WENDA_NOEXCEPT
 		: intrusive_ptr(std::move(other))
 	{}
 
@@ -72,7 +80,7 @@ public:
 	/**
 	* Move assign operator.
 	*/
-	intrusive_packed_ptr& operator=(intrusive_packed_ptr&& other)
+	intrusive_packed_ptr& operator=(intrusive_packed_ptr&& other) WENDA_NOEXCEPT
 	{
 		intrusive_ptr::operator=(std::move(other));
 		return *this;
@@ -83,7 +91,7 @@ public:
 	* @returns A @ref std::uint_fast32_t representing
 	* the packed integral value.
 	*/
-	std::uint_fast32_t get_value() const
+	std::uint_fast32_t get_value() const WENDA_NOEXCEPT
 	{
 		return pointer.get_value();
 	}
@@ -93,7 +101,7 @@ public:
 	* The @p value must be less than the alignment of the pointed to type.
 	* @param value The value to be set.
 	*/
-	void set_value(std::uint_fast32_t value)
+	void set_value(std::uint_fast32_t value) WENDA_NOEXCEPT
 	{
 		pointer.set_value(value);
 	}

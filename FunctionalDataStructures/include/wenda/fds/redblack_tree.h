@@ -9,6 +9,7 @@
 #include <tuple>
 
 #include "intrusive_ptr.h"
+#include "intrusive_packed_ptr.h"
 
 /**
 * @file redblack_tree.h
@@ -24,22 +25,11 @@ namespace detail
 	*/
 	enum class NodeColour
 	{
-        NegativeBlack = -1,
         Red = 0,
         Black = 1,
         DoubleBlack = 2
 	};
     
-	inline NodeColour operator+(NodeColour left, NodeColour right)
-	{
-		return NodeColour(static_cast<int>(left) + static_cast<int>(right));
-	}
-
-	inline NodeColour operator-(NodeColour left, NodeColour right)
-	{
-		return NodeColour(static_cast<int>(left) - static_cast<int>(right));
-	}
-
     template<typename T>
 	class redblack_tree_iterator;
 
