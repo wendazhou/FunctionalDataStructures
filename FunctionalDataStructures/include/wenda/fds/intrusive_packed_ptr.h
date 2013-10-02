@@ -125,6 +125,13 @@ public:
 	}
 };
 
+template<typename T, typename... Args>
+intrusive_packed_ptr<T> make_intrusive_packed(Args... args)
+{
+	auto ptr = new T(std::forward<Args>(args)...);
+	return intrusive_packed_ptr<T>(ptr);
+}
+
 WENDA_FDS_NAMESPACE_END
 
 #endif // WENDA_FDS_INTRUSIVE_PACKED_PTR_H_INCLUDED
