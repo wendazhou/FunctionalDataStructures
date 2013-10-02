@@ -137,26 +137,46 @@ namespace detail
 		}
 	};
 	
+	/**
+	* Returns a pointer to a new node with the given data, colour, and left and right child.
+	* @param data The data to be stored in the node.
+	* @param colour The colour to be given to the returned pointer.
+	* @param left The left child of the node.
+	* @param right The right child of the node.
+	* @returns A smart pointer to a newly created node with the given data.
+	*/
 	template<typename T, typename U>
-	rb_pointer<T> make_redblack_node(U&& data, NodeColour colour, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
+	intrusive_rb_ptr<T> make_redblack_node(U&& data, NodeColour colour, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
 	{
 		rb_pointer<T> rb = new redblack_node<T>(std::forward<U>(data), std::move(left), std::move(right));
 		rb.set_value(static_cast<std::uint_fast32_t>(colour));
 		return rb;
 	}
 
+	/**
+	* Gets the colour associated to the given node pointer.
+	* @param node The pointer for which to get the colour. Can be null.
+	*/
     template<typename T>
 	NodeColour colour(const_rb_pointer<T> node)
 	{
 		return static_cast<NodeColour>(node.get_value());
 	}
 
+	/**
+	* Gets the colour associated to the given node pointer.
+	* @param node The pointer for which to get the colour. Can be null.
+	*/
     template<typename T>
 	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node)
 	{
 		return colour(node.get());
     }
 
+	/**
+	* Gets the colour associated to the given node pointer.
+	* @param node The pointer for which to get the colour. Can be null.
+	*/
     template<typename T>
 	NodeColour colour(const_intrusive_rb_ptr<T> const& node)
     {
@@ -165,6 +185,8 @@ namespace detail
 
 	/**
     * Constructs a new black node from the given node, or if it is already black, returns the node.
+	* @param pointer A pointer to the node for which to change the colour.
+	* @returns A pointer to the same node, but coloured black.
 	*/
     template<typename T>
 	const_intrusive_rb_ptr<T> make_black(const_rb_pointer<T> pointer)
