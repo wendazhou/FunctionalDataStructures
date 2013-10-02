@@ -87,6 +87,24 @@ public:
 	}
 
 	/**
+	* Copy convert operator.
+	* Converts from a compatible pointer type.
+	*/
+	template<typename U, typename SFINAE = typename std::enable_if<std::is_convertible<U*, T*>::value>::type>
+	intrusive_packed_ptr(intrusive_packed_ptr<U> const& other)
+		: intrusive_ptr(other.get())
+	{}
+
+	/**
+	* Move converts operator.
+	* Converts from a compatible pointer type.
+	*/
+	template<typename U, typename SFINAE = typename std::enable_if<std::is_convertible<U*, T*>::value>::type>
+	intrusive_packed_ptr(intrusive_packed_ptr<U>&& other)
+		: intrusive_ptr(std::move(other.get()))
+	{}
+
+	/**
 	* Gets the packed integral value.
 	* @returns A @ref std::uint_fast32_t representing
 	* the packed integral value.

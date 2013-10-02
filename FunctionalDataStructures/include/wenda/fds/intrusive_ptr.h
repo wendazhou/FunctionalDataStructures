@@ -49,7 +49,7 @@ public:
 	* intrusive_ptr with make_intrusive().
 	* @param pointer The pointer that is to be held. May be null.
 	*/
-	explicit intrusive_ptr(T* pointer)
+	explicit intrusive_ptr(pointer_t pointer)
 		: pointer(pointer)
 	{
 		if (pointer)
