@@ -22,15 +22,26 @@ WENDA_FDS_NAMESPACE_BEGIN
 namespace detail
 {
 	/**
-    * This enum represents the colour of a node in the red-black tree.
+	* This enum represents the colour of a node in the red-black tree.
 	*/
 	enum class NodeColour
 		: std::uint_fast32_t
 	{
-        Red = 0,
-        Black = 1,
-        DoubleBlack = 2
+		Red = 0,
+			Black = 1,
+			DoubleBlack = 2,
+			NegativeBlack = 3,
 	};
+
+	inline NodeColour operator+(NodeColour left, NodeColour right)
+	{
+		return NodeColour((static_cast<std::uint_fast32_t>(left) + static_cast<std::uint_fast32_t>(right)) % 4);
+	}
+
+	inline NodeColour operator-(NodeColour left, NodeColour right)
+	{
+		return NodeColour((static_cast<std::uint_fast32_t>(left) - static_cast<std::uint_fast32_t>(right)) % 4);
+	}
     
     template<typename T>
 	class redblack_tree_iterator;
@@ -101,7 +112,7 @@ namespace detail
 		*/
 		const_rb_pointer<T> minimum() const WENDA_NOEXCEPT
 		{
-			return left == nullptr ? this : left->minimum();
+			return left ? this : left->minimum();
 		}
 
 		/**
@@ -109,7 +120,7 @@ namespace detail
 		*/
 		const_rb_pointer<T> maximum() const WENDA_NOEXCEPT
 		{
-			return right == nullptr ? this : right->maximum();
+			return right ? this : right->maximum();
 		}
 
 		/**
@@ -124,11 +135,11 @@ namespace detail
 		{
 			if (comp(value, data))
 			{
-				return left == nullptr ? nullptr : left->find(std::forward<U>(value), comp);
+				return left ? nullptr : left->find(std::forward<U>(value), comp);
 			}
 			else if (comp(data, value))
 			{
-				return right == nullptr ? nullptr : right->find(std::forward<U>(value), comp);
+				return right ? nullptr : right->find(std::forward<U>(value), comp);
 			}
 			else
 			{
@@ -153,12 +164,20 @@ namespace detail
 		return rb;
 	}
 
+	template<typename T>
+	const_rb_pointer<T> make_null_redblack_node(NodeColour colour = NodeColour::Black) WENDA_NOEXCEPT
+	{
+		const_rb_pointer<T> ptr(nullptr);
+		ptr.set_value(static_cast<std::uint_fast32_t>(colour));
+		return ptr;
+	}
+
 	/**
 	* Gets the colour associated to the given node pointer.
 	* @param node The pointer for which to get the colour. Can be null.
 	*/
     template<typename T>
-	NodeColour colour(const_rb_pointer<T> node)
+	NodeColour colour(const_rb_pointer<T> node) WENDA_NOEXCEPT
 	{
 		return static_cast<NodeColour>(node.get_value());
 	}
@@ -168,7 +187,7 @@ namespace detail
 	* @param node The pointer for which to get the colour. Can be null.
 	*/
     template<typename T>
-	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node)
+	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node) WENDA_NOEXCEPT
 	{
 		return colour(node.get());
     }
@@ -178,7 +197,7 @@ namespace detail
 	* @param node The pointer for which to get the colour. Can be null.
 	*/
     template<typename T>
-	NodeColour colour(const_intrusive_rb_ptr<T> const& node)
+	NodeColour colour(const_intrusive_rb_ptr<T> const& node) WENDA_NOEXCEPT
     {
 		return colour(node.get());
     }
@@ -356,7 +375,8 @@ namespace detail
 
 		if (!tree)
 		{
-			const_intrusive_rb_ptr<T> newTree(make_redblack_node<T>(std::forward<U>(value), NodeColour::Red, nullptr, nullptr));
+			const_intrusive_rb_ptr<T> newTree(make_redblack_node<T>(std::forward<U>(value), 
+				NodeColour::Red, make_null_redblack_node<T>(), make_null_redblack_node<T>()));
 			auto ptr = newTree.get();
 			return return_t(std::move(newTree), ptr, true);
 		}
@@ -402,12 +422,15 @@ namespace detail
 		}
 		else if (node->left || node->right)
 		{
+			// one child case, remove the node, and colour the child accordingly.
 			auto child = node->left ? node->left : node->right;
-			return make_intrusive<redblack_node<T>>(child->data, NodeColour::Black, nullptr, nullptr);
+			auto newColour = colour(child) == NodeColour::Black ? NodeColour::DoubleBlack : NodeColour::Black;
+
+			return make_intrusive<redblack_node<T>>(child->data, newColour, make_null_redblack_node<T>(), make_null_redblack_node<T>());
 		}
 		else
 		{
-			return nullptr;
+			return make_null_redblack_node<T>();
 		}
 	}
 
@@ -417,7 +440,7 @@ namespace detail
 	{
 		if (!tree)
 		{
-			return std::make_tuple(nullptr, nullptr, false);
+			return std::make_tuple(make_null_redblack_node<T>(), make_null_redblack_node<T>(), false);
 		}
 
 		const_intrusive_rb_ptr<T> newTree;
@@ -465,12 +488,12 @@ namespace detail
 			return std::addressof(current->data);
 		}
 
-		bool operator==(redblack_tree_iterator<T> const& other) WENDA_NOEXCEPT
+		bool operator==(redblack_tree_iterator const& other) WENDA_NOEXCEPT
 		{
 			return current == other.current;
 		}
 
-		bool operator!=(redblack_tree_iterator<T> const& other) WENDA_NOEXCEPT
+		bool operator!=(redblack_tree_iterator const& other) WENDA_NOEXCEPT
 		{
 			return current != other.current;
 		}
@@ -510,7 +533,7 @@ public:
     * Initializes a new empty tree.
 	*/
 	redblack_tree() WENDA_NOEXCEPT
-		: root(nullptr)
+		: root(detail::make_null_redblack_node<T>())
 	{}
 
 	/**
@@ -560,7 +583,7 @@ public:
 		}
 		else
 		{
-			return iterator(nullptr);
+			return iterator(detail::make_null_redblack_node<T>());
 		}
 	}
 
@@ -579,7 +602,7 @@ public:
 	*/
 	iterator end() const WENDA_NOEXCEPT
 	{
-		return iterator(nullptr);
+		return iterator(detail::make_null_redblack_node<T>());
 	}
 
 	/**
@@ -597,7 +620,12 @@ public:
 	*/
 	bool empty() const WENDA_NOEXCEPT
 	{
-		return root == nullptr;
+		if (!root)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
