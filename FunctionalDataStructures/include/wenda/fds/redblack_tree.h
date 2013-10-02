@@ -134,6 +134,10 @@ namespace detail
 				return this;
 			}
 		}
+
+		T const& get_data() const { return data; }
+		const_intrusive_rb_ptr<T> const& get_left() const { return left; }
+		const_intrusive_rb_ptr<T> const& get_right() const { return right; }
 	};
 
 	/**
@@ -145,7 +149,8 @@ namespace detail
 	* @returns A smart pointer to a newly created node with the given data.
 	*/
 	template<typename T, typename U>
-	intrusive_rb_ptr<T> make_redblack_node(U&& data, NodeColour colour, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
+	intrusive_rb_ptr<T> make_redblack_node(U&& data, NodeColour colour = NodeColour::Red, 
+		const_intrusive_rb_ptr<T> left = make_null_redblack_node<T>(), const_intrusive_rb_ptr<T> right = make_null_redblack_node<T>())
 	{
 		rb_pointer<T> rb = new redblack_node<T>(std::forward<U>(data), std::move(left), std::move(right));
 		rb.set_value(static_cast<std::uint_fast32_t>(colour));
@@ -219,6 +224,29 @@ namespace detail
     }
 
 	/**
+	* Sets the pointer colour to the given @p colour.
+	* @param node A reference to the node for which to set the colour.
+	* @param colour The colour to be set.
+	*/
+	template<typename T>
+	void set_colour(const_rb_pointer<T>& node, NodeColour colour)
+	{
+		node.set_value(static_cast <std::uint_fast32_t>(colour));
+	}
+
+	template<typename T>
+	void set_colour(intrusive_rb_ptr<T>& node, NodeColour colour)
+	{
+		node.set_value(static_cast <std::uint_fast32_t>(colour));
+	}
+
+	template<typename T>
+	void set_colour(const_intrusive_rb_ptr<T>& node, NodeColour colour)
+	{
+		node.set_value(static_cast <std::uint_fast32_t>(colour));
+	}
+
+	/**
     * Constructs a new black node from the given node, or if it is already black, returns the node.
 	* @param pointer A pointer to the node for which to change the colour.
 	* @returns A pointer to the same node, but coloured black.
@@ -226,7 +254,7 @@ namespace detail
     template<typename T>
 	const_intrusive_rb_ptr<T> make_black(const_rb_pointer<T> pointer)
 	{
-		pointer.set_value(static_cast<std::uint_fast32_t>(NodeColour::Black));
+		set_colour(pointer, NodeColour::Black);
 		return pointer;
 	}
 
@@ -437,15 +465,35 @@ namespace detail
 		}
 		else if (node->left || node->right)
 		{
-			// one child case, remove the node, and colour the child accordingly.
+			// one child case. The child must be red, the parent black (otherwise violates RB condition).
 			auto child = node->left ? node->left : node->right;
-			auto newColour = colour(child) == NodeColour::Black ? NodeColour::DoubleBlack : NodeColour::Black;
 
-			return make_redblack_node<T>(child->data, newColour, make_null_redblack_node<T>(), make_null_redblack_node<T>());
+			set_colour(child, NodeColour::Black);
+
+			return child;
 		}
 		else
 		{
+			// no children
+			// return an empty node with the correct colour.
 			return make_null_redblack_node<T>(colour(node) + NodeColour::Black);
+		}
+	}
+
+	template<typename T, typename U>
+	intrusive_rb_ptr<T> bubble(NodeColour node_colour, U&& value, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
+	{
+		if (colour(left) == NodeColour::DoubleBlack || colour(right) == NodeColour::DoubleBlack)
+		{
+			const_rb_pointer<T> inserted_dummy = nullptr;
+			set_colour(left, colour(left) - NodeColour::Black);
+			set_colour(right, colour(right) - NodeColour::Black);
+
+			return balance(node_colour + NodeColour::Black, std::forward<U>(value), std::move(left), std::move(right), inserted_dummy);
+		}
+		else
+		{
+			return make_redblack_node<T>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 		}
 	}
 
