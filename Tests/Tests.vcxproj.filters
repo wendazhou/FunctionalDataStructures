@@ -38,5 +38,8 @@
     <ClCompile Include="IntrusivePackedPtrTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RedBlackTreeTests.Deletion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

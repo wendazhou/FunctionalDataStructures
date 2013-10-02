@@ -28,25 +28,25 @@ namespace detail
 		: std::uint_fast32_t
 	{
 		Red = 0,
-			Black = 1,
-			DoubleBlack = 2,
-			NegativeBlack = 3,
+		Black = 1,
+		DoubleBlack = 2,
+		NegativeBlack = 3,
 	};
 
 	inline NodeColour operator+(NodeColour left, NodeColour right)
 	{
-		return NodeColour((static_cast<std::uint_fast32_t>(left) + static_cast<std::uint_fast32_t>(right)) % 4);
+		return NodeColour((static_cast<std::uint_fast32_t>(left) +static_cast<std::uint_fast32_t>(right)) % 4);
 	}
 
 	inline NodeColour operator-(NodeColour left, NodeColour right)
 	{
-		return NodeColour((static_cast<std::uint_fast32_t>(left) - static_cast<std::uint_fast32_t>(right)) % 4);
+		return NodeColour((static_cast<std::uint_fast32_t>(left) -static_cast<std::uint_fast32_t>(right)) % 4);
 	}
-    
-    template<typename T>
+
+	template<typename T>
 	class redblack_tree_iterator;
 
-    template<typename T>
+	template<typename T>
 	class redblack_node;
 
 	template<typename T> using rb_pointer = packed_ptr<redblack_node<T>>;
@@ -54,27 +54,18 @@ namespace detail
 	template<typename T> using intrusive_rb_ptr = intrusive_packed_ptr<redblack_node<T>>;
 	template<typename T> using const_intrusive_rb_ptr = intrusive_packed_ptr<const redblack_node<T>>;
 
-    template<typename T, typename U, typename Compare>
-	std::tuple<const_intrusive_rb_ptr<T>, const_rb_pointer<T>, bool> 
-	insert_impl(const_rb_pointer<T> tree, U&& value, Compare const& compare);
+	template<typename T, typename U, typename Compare>
+	std::tuple<const_intrusive_rb_ptr<T>, const_rb_pointer<T>, bool>
+		insert_impl(const_rb_pointer<T> tree, U&& value, Compare const& compare);
 
-    template<typename T>
-	const_intrusive_rb_ptr<T> make_black(const_rb_pointer<T>);
-
-    template<typename T>
-	NodeColour colour(const_rb_pointer<T> node);
-
-    template<typename T>
-	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node);
-
-    template<typename T>
-	NodeColour colour(const_intrusive_rb_ptr<T> const& node);
+	template<typename T>
+	const_intrusive_rb_ptr<T> remove_node(const_rb_pointer<T> node);
 
 	/**
-    * This class represents a node in a red-black tree.
-    * @tparam T The type of the elements stored by the node.
+	* This class represents a node in a red-black tree.
+	* @tparam T The type of the elements stored by the node.
 	*/
-    template<typename T>
+	template<typename T>
 	class redblack_node
 		: public intrusive_refcount
 	{
@@ -82,33 +73,30 @@ namespace detail
 
 		template<typename T1, typename U, typename Compare>
 		friend std::tuple<const_intrusive_rb_ptr<T1>, const_rb_pointer<T1>, bool>
-		insert_impl(const_rb_pointer<T1>, U&&, Compare const&);
+			insert_impl(const_rb_pointer<T1>, U&&, Compare const&);
 
 		template<typename T1, typename U>
-		friend intrusive_rb_ptr<T1> balance(NodeColour colour, U&& value, 
+		friend intrusive_rb_ptr<T1> balance(NodeColour colour, U&& value,
 			const_intrusive_rb_ptr<T1> left, const_intrusive_rb_ptr<T1> right,
 			const_rb_pointer<T1>&);
 
-		friend const_intrusive_rb_ptr<T> make_black<>(const_rb_pointer<T>);
-		friend NodeColour colour<>(const_rb_pointer<T>);
-		friend NodeColour colour<>(intrusive_ptr<redblack_node<T>> const&);
-		friend NodeColour colour<>(const_intrusive_rb_ptr<T> const&);
+		friend const_intrusive_rb_ptr<T> remove_node<>(const_rb_pointer<T> node);
 
 		T data; ///< The data held by the node
 		const_intrusive_rb_ptr<T> left; ///< A pointer to the smaller (left) child, or null.
 		const_intrusive_rb_ptr<T> right; ///< A pointer to the greater (right) child, or null.
 	public:
 		/**
-        * Initializes a new node with the given data.
+		* Initializes a new node with the given data.
 		*/
-		redblack_node(T data, const_intrusive_rb_ptr<T> left, 
+		redblack_node(T data, const_intrusive_rb_ptr<T> left,
 			const_intrusive_rb_ptr<T> right)
 			: data(std::move(data)), left(std::move(left)), right(std::move(right))
 		{
 		}
 
 		/**
-        * Returns a pointer to the minimum node from this node.
+		* Returns a pointer to the minimum node from this node.
 		*/
 		const_rb_pointer<T> minimum() const WENDA_NOEXCEPT
 		{
@@ -116,7 +104,7 @@ namespace detail
 		}
 
 		/**
-        * Returns a pointer to the maximum node from this node.
+		* Returns a pointer to the maximum node from this node.
 		*/
 		const_rb_pointer<T> maximum() const WENDA_NOEXCEPT
 		{
@@ -124,22 +112,22 @@ namespace detail
 		}
 
 		/**
-        * Finds the node with an equivalent value (in the strict weak ordering sense)
-        * in the children of this node.
-        * @param value The value to be found.
-        * @param comp The comparison function to use. It must be compatible with the comparison
-        * function used to construct this tree.
+		* Finds the node with an equivalent value (in the strict weak ordering sense)
+		* in the children of this node.
+		* @param value The value to be found.
+		* @param comp The comparison function to use. It must be compatible with the comparison
+		* function used to construct this tree.
 		*/
 		template<typename U, typename Compare>
 		const_rb_pointer<T> find(U&& value, Compare const& comp) const WENDA_NOEXCEPT
 		{
 			if (comp(value, data))
 			{
-				return left ? nullptr : left->find(std::forward<U>(value), comp);
+				return is_leaf(left) ? make_null_redblack_node<T>() : left->find(std::forward<U>(value), comp);
 			}
 			else if (comp(data, value))
 			{
-				return right ? nullptr : right->find(std::forward<U>(value), comp);
+				return is_leaf(right) ? make_null_redblack_node<T>() : right->find(std::forward<U>(value), comp);
 			}
 			else
 			{
@@ -147,7 +135,7 @@ namespace detail
 			}
 		}
 	};
-	
+
 	/**
 	* Returns a pointer to a new node with the given data, colour, and left and right child.
 	* @param data The data to be stored in the node.
@@ -170,6 +158,34 @@ namespace detail
 		const_rb_pointer<T> ptr(nullptr);
 		ptr.set_value(static_cast<std::uint_fast32_t>(colour));
 		return ptr;
+	}
+
+	/**
+	* Returns a value indicating whether there is any data stored in the node.
+	* @param The node to test.
+	* @returns True if the node is a leaf, that is, there is no data. Otherwise false.
+	*/
+	template<typename T>
+	bool is_leaf(const_rb_pointer<T> node) WENDA_NOEXCEPT
+	{
+		if (!node)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	template<typename T>
+	bool is_leaf(const_intrusive_rb_ptr<T> const& node) WENDA_NOEXCEPT
+	{
+		return is_leaf(node.get());
+	}
+
+	template<typename T>
+	bool is_leaf(intrusive_rb_ptr<T> const& node) WENDA_NOEXCEPT
+	{
+		return is_leaf(node.get());
 	}
 
 	/**
@@ -415,10 +431,9 @@ namespace detail
 
 			auto removed = remove_node(max);
 
-			auto newLeft = make_intrusive<redblack_node<T>>(node->left->data, node->left->colour, 
-				node->left->value, node->left->left, removed);
+			auto newLeft = make_redblack_node<T>(node->left->data, colour(node->left), node->left->left, removed);
 
-			return make_intrusive<redblack_node<T>>(max->data, node->colour, newLeft, node->right);
+			return make_redblack_node<T>(max->data, colour(node), newLeft, node->right);
 		}
 		else if (node->left || node->right)
 		{
@@ -426,11 +441,11 @@ namespace detail
 			auto child = node->left ? node->left : node->right;
 			auto newColour = colour(child) == NodeColour::Black ? NodeColour::DoubleBlack : NodeColour::Black;
 
-			return make_intrusive<redblack_node<T>>(child->data, newColour, make_null_redblack_node<T>(), make_null_redblack_node<T>());
+			return make_redblack_node<T>(child->data, newColour, make_null_redblack_node<T>(), make_null_redblack_node<T>());
 		}
 		else
 		{
-			return make_null_redblack_node<T>();
+			return make_null_redblack_node<T>(colour(node) + NodeColour::Black);
 		}
 	}
 
