@@ -140,6 +140,12 @@ namespace detail
 		*/
 		void set_colour(NodeColour colour) { this->colour = colour; }
 	};
+	
+	template<typename T, typename U>
+	rb_pointer<T> make_redblack_node(U&& data, NodeColour colour, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
+	{
+		return new redblack_node<T>(std::forward<U>(data), colour, std::move(left), std::move(right));
+	}
 
     template<typename T>
 	NodeColour colour(const_rb_pointer<T> node)
@@ -175,7 +181,7 @@ namespace detail
 			return const_intrusive_rb_ptr<T>(pointer);
 		}
 
-		return make_intrusive_packed<redblack_node<T>>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
+		return make_redblack_node<T>(pointer->data, NodeColour::Black, pointer->left, pointer->right);
 	}
 
 	/**
@@ -196,11 +202,11 @@ namespace detail
 	balance_create_leftright(LL&& leftLeft, LR&& leftRight, RL&& rightLeft, RR&& rightRight, 
 		ValueL&& valueLeft, ValueR&& valueRight)
 	{
-		auto newLeft = make_intrusive_packed<redblack_node<T>>(
+		auto newLeft = make_redblack_node<T>(
 			std::forward<ValueL>(valueLeft), NodeColour::Black, 
 			std::forward<LL>(leftLeft), std::forward<LR>(leftRight));
 
-		auto newRight = make_intrusive_packed<redblack_node<T>>(
+		auto newRight = make_redblack_node<T>(
 			std::forward<ValueR>(valueRight), NodeColour::Black, 
 			std::forward<RL>(rightLeft), std::forward<RR>(rightRight));
 
@@ -219,7 +225,7 @@ namespace detail
     template<typename T, typename Left, typename Right, typename Value>
 	intrusive_rb_ptr<T> balance_create_middle(Left&& left, Right&& right, Value&& value)
 	{
-		return make_intrusive_packed<redblack_node<T>>(std::forward<Value>(value) , NodeColour::Red,
+		return make_redblack_node<T>(std::forward<Value>(value) , NodeColour::Red,
 		    std::forward<Left>(left), std::forward<Right>(right));
 	}
 
@@ -242,7 +248,7 @@ namespace detail
 	{
 		if (node_colour != NodeColour::Black)
 		{
-			return make_intrusive_packed<redblack_node<T>>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
+			return make_redblack_node<T>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 		}
 
 		if (left && colour(left) == NodeColour::Red)
@@ -317,7 +323,7 @@ namespace detail
 			}
 		}
 
-		return make_intrusive_packed<redblack_node<T>>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
+		return make_redblack_node<T>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 	}
 
 	/**
@@ -339,7 +345,7 @@ namespace detail
 
 		if (!tree)
 		{
-			const_intrusive_rb_ptr<T> newTree(make_intrusive_packed<redblack_node<T>>(std::forward<U>(value), NodeColour::Red, nullptr, nullptr));
+			const_intrusive_rb_ptr<T> newTree(make_redblack_node<T>(std::forward<U>(value), NodeColour::Red, nullptr, nullptr));
 			auto ptr = newTree.get();
 			return return_t(std::move(newTree), ptr, true);
 		}
