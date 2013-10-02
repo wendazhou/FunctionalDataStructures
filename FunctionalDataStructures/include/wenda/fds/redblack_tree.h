@@ -82,16 +82,15 @@ namespace detail
 		friend NodeColour colour<>(const_intrusive_rb_ptr<T> const&);
 
 		T data; ///< The data held by the node
-		NodeColour colour; ///< The colour of the node
 		const_intrusive_rb_ptr<T> left; ///< A pointer to the smaller (left) child, or null.
 		const_intrusive_rb_ptr<T> right; ///< A pointer to the greater (right) child, or null.
 	public:
 		/**
         * Initializes a new node with the given data.
 		*/
-		redblack_node(T data, NodeColour colour, const_intrusive_rb_ptr<T> left, 
+		redblack_node(T data, const_intrusive_rb_ptr<T> left, 
 			const_intrusive_rb_ptr<T> right)
-			: data(std::move(data)), colour(std::move(colour)), left(std::move(left)), right(std::move(right))
+			: data(std::move(data)), left(std::move(left)), right(std::move(right))
 		{
 		}
 
@@ -144,18 +143,15 @@ namespace detail
 	template<typename T, typename U>
 	rb_pointer<T> make_redblack_node(U&& data, NodeColour colour, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
 	{
-		return new redblack_node<T>(std::forward<U>(data), colour, std::move(left), std::move(right));
+		rb_pointer<T> rb = new redblack_node<T>(std::forward<U>(data), std::move(left), std::move(right));
+		rb.set_value(static_cast<std::uint_fast32_t>(colour));
+		return rb;
 	}
 
     template<typename T>
 	NodeColour colour(const_rb_pointer<T> node)
 	{
-		if (node)
-		{
-		    return node->colour;
-		}
-
-		return NodeColour::Black;
+		return static_cast<NodeColour>(node.get_value());
 	}
 
     template<typename T>
@@ -176,7 +172,7 @@ namespace detail
     template<typename T>
 	const_intrusive_rb_ptr<T> make_black(const_rb_pointer<T> pointer)
 	{
-		if (pointer->colour == NodeColour::Black)
+		if (colour(pointer) == NodeColour::Black)
 		{
 			return const_intrusive_rb_ptr<T>(pointer);
 		}
@@ -357,13 +353,13 @@ namespace detail
 		if (compare(value, tree->data))
 		{
 		    std::tie(newTree, iterator, inserted) = insert_impl(tree->left.get(), std::forward<U>(value), compare);
-			auto balancedTree = balance(tree->colour, tree->data, std::move(newTree), tree->right, iterator);
+			auto balancedTree = balance(colour(tree), tree->data, std::move(newTree), tree->right, iterator);
 			return return_t(std::move(balancedTree), iterator, inserted);
 		}
 		else if (compare(tree->data, value))
 		{
 			std::tie(newTree, iterator, inserted) = insert_impl(tree->right.get(), std::forward<U>(value), compare);
-			auto balancedTree = balance(tree->colour, tree->data, tree->left, std::move(newTree), iterator);
+			auto balancedTree = balance(colour(tree), tree->data, tree->left, std::move(newTree), iterator);
 			return return_t(std::move(balancedTree), iterator, inserted);
 		}
 		else
