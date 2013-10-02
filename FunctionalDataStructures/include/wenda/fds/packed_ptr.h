@@ -255,11 +255,13 @@ std::size_t remove_reference(packed_ptr<T> const& ptr) WENDA_NOEXCEPT
 template<typename T>
 struct packed_ptr_deleter
 {
+	typedef typename std::decay<T>::type deleted_type;
+
 	/**
 	* Deletes the object referenced by the @p pointer.
 	* @param pointer A pointer pointing to the object to be deleted.
 	*/
-	void operator()(packed_ptr<T> const& pointer) const
+	void operator()(packed_ptr<deleted_type> const& pointer) const
 	{
 		delete_ptr(pointer);
 	}
@@ -268,7 +270,7 @@ struct packed_ptr_deleter
 	* Deletes the object referenced by the @p pointer.
 	* @param pointer A pointer pointing to the object to be deleted.
 	*/
-	void operator()(packed_ptr<const T> const& pointer) const
+	void operator()(packed_ptr<const deleted_type> const& pointer) const
 	{
 		delete_ptr(pointer);
 	}

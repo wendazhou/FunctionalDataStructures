@@ -97,5 +97,16 @@ namespace tests
 
 			Assert::AreEqual(2u, ptr2.get_value());
 		}
+
+		TEST_METHOD(IntrusivePackedPtr_Can_Convert_From_Pointer_To_Pointer_To_Const)
+		{
+			intrusive_packed_ptr<ref_counted_int> ptr = new ref_counted_int();
+
+			ptr->value = 2;
+
+			intrusive_packed_ptr<const ref_counted_int> ptr2(ptr);
+
+			Assert::AreEqual(2, ptr->value);
+		}
 	};
 }
