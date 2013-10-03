@@ -8,6 +8,7 @@
 #include <iterator>
 #include <tuple>
 #include <cstdint>
+#include <cassert>
 
 #include "intrusive_ptr.h"
 #include "intrusive_packed_ptr.h"
@@ -208,7 +209,7 @@ namespace detail
 	* @param node The pointer for which to get the colour. Can be null.
 	*/
     template<typename T>
-	NodeColour colour(intrusive_ptr<redblack_node<T>> const& node) WENDA_NOEXCEPT
+	NodeColour colour(intrusive_rb_ptr<T> const& node) WENDA_NOEXCEPT
 	{
 		return colour(node.get());
     }
@@ -291,20 +292,34 @@ namespace detail
 
 	/**
     * Helper function for balance(), creates a red node from the given left and right black nodes.
+	* @param previousColour The original colour of the ancestor.
     * @param left The left child of the node to be created.
     * @param right The right child of the node to be created.
     * @param value The value of the node to be created.
     * @tparam T The type of the element held by the nodes.
 	*/
     template<typename T, typename Left, typename Right, typename Value>
-	intrusive_rb_ptr<T> balance_create_middle(Left&& left, Right&& right, Value&& value)
+	intrusive_rb_ptr<T> balance_create_middle(NodeColour previousColour, Left&& left, Right&& right, Value&& value)
 	{
-		return make_redblack_node<T>(std::forward<Value>(value) , NodeColour::Red,
+		return make_redblack_node<T>(std::forward<Value>(value) , previousColour - NodeColour::Black,
 		    std::forward<Left>(left), std::forward<Right>(right));
 	}
 
+	template<typename T>
+	const_rb_pointer<T> adjust_inserted(const_rb_pointer<T> inserted, const_rb_pointer<T> old_node, const_rb_pointer<T> new_node)
+	{
+		if (inserted == old_node)
+		{
+			return new_node;
+		}
+
+		return inserted;
+	}
+
+
 	/**
-    * Tree balancing operation as described by Okasaki in "Red-Black trees in a functional setting".
+    * Tree balancing operation as described by Okasaki in "Red-Black trees in a functional setting",
+	* generalized to handle the case of double blacks (but not negative blacks).
     * This operation rebalances from the point of view of the grandparent of a node with a red parent
     * that has been inserted.
     * @param colour The colour of the grandparent node.
@@ -320,7 +335,7 @@ namespace detail
 		const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right,
 		const_rb_pointer<T>& inserted)
 	{
-		if (node_colour != NodeColour::Black)
+		if (node_colour != NodeColour::Black && node_colour != NodeColour::DoubleBlack)
 		{
 			return make_redblack_node<T>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
 		}
@@ -335,12 +350,9 @@ namespace detail
 					left->left->left, left->left->right, left->right, std::move(right),
 					left->left->data, std::forward<U>(value));
 
-				if (inserted == left->left.get())
-				{
-					inserted = newLeft.get();
-				}
+				inserted = adjust_inserted<T>(inserted, left->left.get(), newLeft.get());
 
-				return balance_create_middle<T>(std::move(newLeft), std::move(newRight), left->data);
+				return balance_create_middle<T>(node_colour, std::move(newLeft), std::move(newRight), left->data);
 			}
 			else if (left->right && colour(left->right) == NodeColour::Red)
 			{
@@ -350,12 +362,9 @@ namespace detail
 					left->left, left->right->left, left->right->right, std::move(right),
 					left->data, std::forward<U>(value));
 
-				auto retval = balance_create_middle<T>(std::move(newLeft), std::move(newRight), left->right->data);
+				auto retval = balance_create_middle<T>(node_colour, std::move(newLeft), std::move(newRight), left->right->data);
 
-				if (inserted == left->right.get())
-				{
-					inserted = retval.get();
-				}
+				inserted = adjust_inserted<T>(inserted, left->right.get(), retval.get());
 
 				return retval;
 			}
@@ -371,12 +380,9 @@ namespace detail
 					std::move(left), right->left->left, right->left->right, right->right,
 					std::forward<U>(value), right->data);
 
-				auto retval = balance_create_middle<T>(std::move(newLeft), std::move(newRight), right->left->data);
+				auto retval = balance_create_middle<T>(node_colour, std::move(newLeft), std::move(newRight), right->left->data);
 
-				if (inserted == right->left.get())
-				{
-					inserted = retval.get();
-				}
+				inserted = adjust_inserted<T>(inserted, right->left.get(), retval.get());
 
 				return retval;
 			}
@@ -388,16 +394,29 @@ namespace detail
 					std::move(left), right->left, right->right->left, right->right->right,
 					std::forward<U>(value), right->right->data);
 
-				if (inserted == right->right.get())
-				{
-					inserted = newRight.get();
-				}
+				inserted = adjust_inserted<T>(inserted, right->right.get(), newRight.get());
 
-				return balance_create_middle<T>(std::move(newLeft), std::move(newRight), right->data);
+				return balance_create_middle<T>(node_colour, std::move(newLeft), std::move(newRight), right->data);
 			}
 		}
 
 		return make_redblack_node<T>(std::forward<U>(value), node_colour, std::move(left), std::move(right));
+	}
+
+	/**
+	* Extended balance operation as described in http://matt.might.net/articles/red-black-delete/ to balance
+	* trees after a bubble operation. This handles double blacks and negative blacks, and may recursively call itself
+	* once in the case of a negative black.
+	* @sa balance()
+	*/
+    template<typename T, typename U>
+	intrusive_rb_ptr<T> bubble_balance(NodeColour node_colour, U&& value, const_intrusive_rb_ptr<T> left, const_intrusive_rb_ptr<T> right)
+	{
+		if (node_colour != NodeColour::DoubleBlack)
+		{
+			const_rb_pointer<T> dummy = nullptr;
+			return balance(node_colour, std::forward<U>(value), std::move(left), std::move(right), dummy);
+		}
 	}
 
 	/**
