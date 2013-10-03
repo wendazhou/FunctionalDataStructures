@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencie
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Celero", "dependencies\Celero\Celero.vcxproj", "{2A952318-A081-4AEF-BB6D-4C6B90211EFA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Benchmarks", "Benchmarks\Benchmarks.vcxproj", "{7D92B4CE-8A46-4E0A-9E62-84348AC89066}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -29,6 +31,10 @@ Global
 		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Debug|Win32.Build.0 = Debug|Win32
 		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Release|Win32.ActiveCfg = Release|Win32
 		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Release|Win32.Build.0 = Release|Win32
+		{7D92B4CE-8A46-4E0A-9E62-84348AC89066}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7D92B4CE-8A46-4E0A-9E62-84348AC89066}.Debug|Win32.Build.0 = Debug|Win32
+		{7D92B4CE-8A46-4E0A-9E62-84348AC89066}.Release|Win32.ActiveCfg = Release|Win32
+		{7D92B4CE-8A46-4E0A-9E62-84348AC89066}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
