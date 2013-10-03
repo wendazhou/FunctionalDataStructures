@@ -1,0 +1,3 @@
+[submodule "dependencies/Celero"]
+	path = dependencies/Celero
+	url = git@github.com:wendazhou/Celero.git

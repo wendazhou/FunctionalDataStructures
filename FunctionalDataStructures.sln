@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FunctionalDataStructures", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{47C36706-F3A6-4B10-A388-304A969015EA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{8CC8721F-63F7-41EF-85FD-DE208EC14901}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Celero", "dependencies\Celero\Celero.vcxproj", "{2A952318-A081-4AEF-BB6D-4C6B90211EFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,8 +25,15 @@ Global
 		{47C36706-F3A6-4B10-A388-304A969015EA}.Debug|Win32.Build.0 = Debug|Win32
 		{47C36706-F3A6-4B10-A388-304A969015EA}.Release|Win32.ActiveCfg = Release|Win32
 		{47C36706-F3A6-4B10-A388-304A969015EA}.Release|Win32.Build.0 = Release|Win32
+		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Debug|Win32.Build.0 = Debug|Win32
+		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Release|Win32.ActiveCfg = Release|Win32
+		{2A952318-A081-4AEF-BB6D-4C6B90211EFA}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2A952318-A081-4AEF-BB6D-4C6B90211EFA} = {8CC8721F-63F7-41EF-85FD-DE208EC14901}
 	EndGlobalSection
 EndGlobal
