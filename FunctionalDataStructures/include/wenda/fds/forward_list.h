@@ -44,6 +44,18 @@ namespace detail
 		forward_list_next(forward_list_next&& other) WENDA_NOEXCEPT
 			: next(std::move(other.next))
 		{}
+
+		forward_list_next& operator=(forward_list_next const& other)
+		{
+			next = other.next;
+			return *this;
+		}
+
+		forward_list_next& operator=(forward_list_next&& other)
+		{
+			next = std::move(other.next);
+			return *this;
+		}
 	};
 
     template<typename T>
@@ -136,6 +148,18 @@ public:
 	forward_list(forward_list<T>&& other) WENDA_NOEXCEPT
 		: forward_list_next(std::move(other.next))
 	{}
+
+	forward_list& operator=(forward_list const& other)
+	{
+		forward_list_next::operator=(other);
+		return *this;
+	}
+
+	forward_list& operator=(forward_list&& other)
+	{
+		forward_list_next::operator=(std::move(other));
+		return *this;
+	}
 
 	typedef T value_type;
 	typedef detail::forward_list_iterator<T> iterator;
