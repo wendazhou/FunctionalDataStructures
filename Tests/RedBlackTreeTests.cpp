@@ -12,6 +12,33 @@ namespace tests
 {
 	TEST_CLASS(RedBlackTreeTests)
 	{
+		TEST_METHOD(RedBlack_Colour_Arithmetic_Correc)
+		{
+			using detail::NodeColour;
+			Assert::IsTrue(NodeColour::Black == NodeColour::Red + NodeColour::Black);
+			Assert::IsTrue(NodeColour::NegativeBlack + NodeColour::Black == NodeColour::Red);
+			Assert::IsTrue(NodeColour::Black + NodeColour::Black == NodeColour::DoubleBlack);
+
+			Assert::IsTrue(NodeColour::Red - NodeColour::Black == NodeColour::NegativeBlack);
+			Assert::IsTrue(NodeColour::Black - NodeColour::Black == NodeColour::Red);
+			Assert::IsTrue(NodeColour::DoubleBlack - NodeColour::Black == NodeColour::Black);
+		}
+
+		TEST_METHOD(MakeNullRedblackNode_Makes_Node_Of_Correct_Colour)
+		{
+			using detail::NodeColour;
+
+			Assert::IsTrue(NodeColour::Red == colour(detail::make_null_redblack_node<int>(NodeColour::Red)));
+			Assert::IsTrue(NodeColour::Black == colour(detail::make_null_redblack_node<int>(NodeColour::Black)));
+			Assert::IsTrue(NodeColour::DoubleBlack == colour(detail::make_null_redblack_node<int>(NodeColour::DoubleBlack)));
+			Assert::IsTrue(NodeColour::NegativeBlack == colour(detail::make_null_redblack_node<int>(NodeColour::NegativeBlack)));
+		}
+
+		TEST_METHOD(MakeNullRedblackNode_Creates_Falsy_Node)
+		{
+			Assert::IsFalse(static_cast<bool>(detail::make_null_redblack_node<int>()));
+		}
+
 		TEST_METHOD(RedBlackTree_Default_IsEmpty)
 		{
 			const redblack_tree<int> tree;

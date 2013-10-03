@@ -94,7 +94,9 @@
     <ClCompile Include="IntrusivePackedPtrTests.cpp" />
     <ClCompile Include="ListTests.cpp" />
     <ClCompile Include="PackedPtrTests.cpp" />
+    <ClCompile Include="RedBlackTreeTests.Balance.cpp" />
     <ClCompile Include="RedBlackTreeTests.cpp" />
+    <ClCompile Include="RedBlackTreeTests.Deletion.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

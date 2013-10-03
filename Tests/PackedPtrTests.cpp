@@ -111,5 +111,14 @@ namespace tests
 			
 			delete_ptr(ptr);
 		}
+
+		TEST_METHOD(PackedPtr_Can_Convert_Implicitly_From_NonConst_To_Const)
+		{
+			packed_ptr<int> ptr(nullptr);
+
+			packed_ptr<const int> ptr2 = ptr;
+
+			Assert::IsNull(ptr2.get());
+		}
 	};
 }

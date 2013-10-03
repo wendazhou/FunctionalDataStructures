@@ -215,7 +215,12 @@ public:
 	*/
 	explicit operator bool() const WENDA_NOEXCEPT
 	{
-		return pointer != nullptr;
+		if (pointer)
+		{
+			return true;
+		}
+
+		return false;
 	}
 };
 
