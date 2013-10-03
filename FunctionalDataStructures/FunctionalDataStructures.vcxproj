@@ -75,6 +75,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_balance.h" />
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_data.h" />
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_delete.h" />
     <ClInclude Include="include\wenda\fds\FDS_common.h" />
     <ClInclude Include="include\wenda\fds\intrusive_packed_ptr.h" />
     <ClInclude Include="include\wenda\fds\packed_ptr.h" />

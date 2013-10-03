@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\detail">
+      <UniqueIdentifier>{910cec05-168d-42ec-a2ac-fb05523a821b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\wenda\fds\FDS_common.h">
@@ -32,6 +35,15 @@
     </ClInclude>
     <ClInclude Include="include\wenda\fds\intrusive_packed_ptr.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_data.h">
+      <Filter>Header Files\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_balance.h">
+      <Filter>Header Files\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_delete.h">
+      <Filter>Header Files\detail</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

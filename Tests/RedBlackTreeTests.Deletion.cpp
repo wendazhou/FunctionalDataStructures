@@ -75,7 +75,6 @@ namespace tests
 
 		TEST_METHOD(RedBlackTree_Can_Insert_Delete_Parent_With_Two_Children)
 		{
-
 			using std::get;
 
 			redblack_tree<int> tree;
