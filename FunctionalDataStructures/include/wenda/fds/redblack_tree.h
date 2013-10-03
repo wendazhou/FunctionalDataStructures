@@ -270,6 +270,15 @@ public:
 		return return_t(redblack_tree<T>(std::move(blackened)), iterator(element), inserted);
 	}
 
+	/**
+	* Returns a new tree with the given value removed.
+	* This searches for a node which is equivalent to @p value as determined by the 
+	* strict weak ordering induced by Compare and removes it if it exists.
+	* If no equivalent node exist, nothing is done.
+	* @param value The value to be deleted.
+	* @returns A tuple containing the tree as first element, and a bool indicating
+	* whether a node was deleted as the second element.
+	*/
 	template<typename U>
 	std::tuple<redblack_tree<T>, bool> erase(U&& value) const
 	{
