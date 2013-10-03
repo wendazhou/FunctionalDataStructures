@@ -86,5 +86,22 @@ namespace tests
 			Assert::AreEqual(3, result->get_data());
 			Assert::AreEqual(4, result->get_right()->get_data());
 		}
+
+		TEST_METHOD(BubbleBalance_Works_Correctly_For_NegativeBlack_Tree)
+		{
+			auto leftLeft = make_redblack_node<int>(1, NodeColour::Black);
+			auto leftRight = make_redblack_node<int>(3, NodeColour::Black);
+			auto left = make_redblack_node<int>(2, NodeColour::NegativeBlack, leftLeft, leftRight);
+
+			auto result = bubble_balance<int>(NodeColour::DoubleBlack, 4, left, make_null_redblack_node<int>());
+
+			Assert::IsTrue(NodeColour::Black == colour(result));
+			Assert::AreEqual(3, result->get_data());
+
+			Assert::IsTrue(NodeColour::Black == colour(result->get_right()));
+			Assert::AreEqual(4, result->get_right()->get_data());
+
+			Assert::AreEqual(2, result->get_left()->get_data());
+		}
 	};
 }
