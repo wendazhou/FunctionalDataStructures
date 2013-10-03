@@ -18,7 +18,7 @@ public:
 	static const std::size_t element_count = 1000;
 };
 
-BASELINE_F(ForwardList_PushFront, FSTD_forward_list, ForwardListPushFront, 0, 100)
+BASELINE_F(ForwardList_PushFront, STD_forward_list, ForwardListPushFront, 0, 100)
 {
 	std::forward_list<int> list;
 
