@@ -104,10 +104,10 @@ namespace tests
 		{
 			packed_ptr<intrusive_refcount> ptr = new intrusive_refcount();
 
-			int refCount = add_reference(ptr);
-			Assert::AreEqual(1, refCount);
+			auto refCount = add_reference(ptr);
+			Assert::AreEqual(std::size_t(1), refCount);
 			refCount = remove_reference(ptr);
-			Assert::AreEqual(0, refCount);
+			Assert::AreEqual(std::size_t(0), refCount);
 			
 			delete_ptr(ptr);
 		}

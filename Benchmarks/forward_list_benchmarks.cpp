@@ -24,7 +24,7 @@ BASELINE_F(ForwardList_PushFront, STD_forward_list, ForwardListPushFront, 0, 100
 
 	for (size_t i = 0, end = element_count; i < end; i++)
 	{
-		list.push_front(i);
+		list.push_front(static_cast<int>(i));
 	}
 
 	celero::DoNotOptimizeAway(list);
@@ -36,7 +36,7 @@ BENCHMARK_F(ForwardList_PushFront, FDS_forward_list_keep_one, ForwardListPushFro
 
 	for (size_t i = 0, end = element_count; i < end; i++)
 	{
-		list = list.push_front(i);
+		list = list.push_front(static_cast<int>(i));
 	}
 
 	celero::DoNotOptimizeAway(list);
@@ -48,7 +48,7 @@ BENCHMARK_F(ForwardList_PushFront, FDS_forward_list_keep_all, ForwardListPushFro
 
 	for (size_t i = 0, end = element_count; i < end; i++)
 	{
-		this->lists[i] = list.push_front(i);
+		this->lists[i] = list.push_front(static_cast<int>(i));
 	}
 
 	celero::DoNotOptimizeAway(list);
