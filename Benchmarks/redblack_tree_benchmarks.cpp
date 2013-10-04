@@ -17,7 +17,7 @@ class RedBlackTreeInsertFixture
 {
 public:
 	RedBlackTreeInsertFixture()
-		: data(element_count)
+		: data(element_count), trees(element_count)
 	{
 		std::mt19937 mt(145);
 		std::uniform_int_distribution<int> dis;
@@ -26,6 +26,7 @@ public:
 	}
 
 	std::vector<int> data;
+	std::vector<fds::redblack_tree<int>> trees;
 	static const std::size_t element_count = 10000;
 };
 
@@ -51,4 +52,15 @@ BENCHMARK_F(RedBlackTreeInsert, FDS_RedBlackTree_Insert_Keep_One, RedBlackTreeIn
 	}
 
 	celero::DoNotOptimizeAway(set);
+}
+
+BENCHMARK_F(RedBlackTreeInsert, FDS_RedBlackTree_Insert_Keep_All, RedBlackTreeInsertFixture, 0, 10)
+{
+	fds::redblack_tree<int> set;
+
+	for (size_t i = 0; i < element_count; i++)
+	{
+		std::tie(set, std::ignore, std::ignore) = set.insert(data[i]);
+		trees[i] = set;
+	}
 }
