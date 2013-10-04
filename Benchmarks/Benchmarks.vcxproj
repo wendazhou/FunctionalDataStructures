@@ -74,6 +74,7 @@
   <ItemGroup>
     <ClCompile Include="forward_list_benchmarks.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="redblack_tree_benchmarks.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
