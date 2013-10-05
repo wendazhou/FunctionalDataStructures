@@ -20,8 +20,8 @@ namespace detail {
 		: public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, T const*, T const&>
 	{
 		const_rb_pointer<T> current;
-		bool goRight;
 		std::stack<const_rb_pointer<T>> stack;
+		bool goRight;
 
 		void next()
 		{
@@ -50,6 +50,14 @@ namespace detail {
 		}
 	public:
 		redblack_tree_iterator() = default;
+
+		redblack_tree_iterator(redblack_tree_iterator const& other)
+			: current(other.current), goRight(other.goRight), stack(other.stack)
+		{}
+
+		redblack_tree_iterator(redblack_tree_iterator&& other)
+			: current(std::move(other.current)), goRight(std::move(other.goRight)), stack(std::move(other.stack))
+		{}
 
 		explicit redblack_tree_iterator(const_rb_pointer<T> node, bool traverse = false)
 			: current(node), goRight(false)
