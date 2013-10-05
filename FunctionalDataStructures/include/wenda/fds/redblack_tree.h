@@ -16,6 +16,7 @@
 #include "detail/redblack_tree_data.h"
 #include "detail/redblack_tree_balance.h"
 #include "detail/redblack_tree_delete.h"
+#include "detail/redblack_tree_iterator.h"
 
 /**
 * @file redblack_tree.h
@@ -71,45 +72,7 @@ namespace detail
 		{
 			return return_t(const_intrusive_rb_ptr<T>(tree), tree, false);
 		}
-		}
-
-
-	/**
-    * This class implements an iterator for the red-black tree.
-    * The iterators for red-black trees model bidirectional iterators.
-    * @tparam T The type of the elements in the tree.
-	*/
-    template<typename T>
-	class redblack_tree_iterator
-		: public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, T const*, T const&>
-	{
-		const_rb_pointer<T> current;
-	public:
-		redblack_tree_iterator() = default;
-		explicit redblack_tree_iterator(const_rb_pointer<T> node)
-			: current(node)
-		{}
-
-		T const& operator*() const WENDA_NOEXCEPT
-		{
-			return current->get_data();
-		}
-
-		T const* operator->() const WENDA_NOEXCEPT
-		{
-			return std::addressof(current->get_data());
-		}
-
-		bool operator==(redblack_tree_iterator const& other) WENDA_NOEXCEPT
-		{
-			return current == other.current;
-		}
-
-		bool operator!=(redblack_tree_iterator const& other) WENDA_NOEXCEPT
-		{
-			return current != other.current;
-		}
-	};
+	}
 }
 
 /**
@@ -191,7 +154,7 @@ public:
 	{
 		if (root)
 		{
-		    return iterator(root->minimum());
+		    return iterator(root.get(), true);
 		}
 		else
 		{

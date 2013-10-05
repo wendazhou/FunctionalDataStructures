@@ -45,5 +45,8 @@
     <ClInclude Include="include\wenda\fds\detail\redblack_tree_delete.h">
       <Filter>Header Files\detail</Filter>
     </ClInclude>
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_iterator.h">
+      <Filter>Header Files\detail</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

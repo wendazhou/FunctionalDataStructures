@@ -12,6 +12,9 @@
 
 using namespace wenda;
 
+// ======================================================================================
+//                         insertion performance tests
+// ======================================================================================
 class RedBlackTreeInsertFixture
 	: public celero::TestFixture
 {
@@ -65,6 +68,9 @@ BENCHMARK_F(RedBlackTreeInsert, FDS_RedBlackTree_Insert_Keep_All, RedBlackTreeIn
 	}
 }
 
+// ======================================================================================
+//                         find performance tests
+// ======================================================================================
 class RedBlackTreeFindDeleteFixture
 	: public celero::TestFixture
 {
@@ -109,6 +115,9 @@ BENCHMARK_F(RedBlackTreeFind, FDS_RedBlackTree_Find, RedBlackTreeFindDeleteFixtu
 	}
 }
 
+// ======================================================================================
+//                         deletion performance tests
+// ======================================================================================
 BASELINE_F(RedBlackTreeDelete, STD_Set_Delete, RedBlackTreeFindDeleteFixture, 0, 10)
 {
 	std::set<int> set = std_set;
@@ -117,6 +126,8 @@ BASELINE_F(RedBlackTreeDelete, STD_Set_Delete, RedBlackTreeFindDeleteFixture, 0,
 	{
 		set.erase(i);
 	}
+
+	celero::DoNotOptimizeAway(set);
 }
 
 BENCHMARK_F(RedBlackTreeDelete, FDS_RedBlackTree_Delete_Keep_One, RedBlackTreeFindDeleteFixture, 0, 10)
@@ -127,6 +138,8 @@ BENCHMARK_F(RedBlackTreeDelete, FDS_RedBlackTree_Delete_Keep_One, RedBlackTreeFi
 	{
 		std::tie(tree, std::ignore) = tree.erase(i);
 	}
+
+	celero::DoNotOptimizeAway(tree);
 }
 
 BENCHMARK_F(RedBlackTreeDelete, FDS_RedBlackTree_Delete_Keep_All, RedBlackTreeFindDeleteFixture, 0, 10)
@@ -135,7 +148,36 @@ BENCHMARK_F(RedBlackTreeDelete, FDS_RedBlackTree_Delete_Keep_All, RedBlackTreeFi
 
 	for (std::size_t i = 0; i < element_count; i++)
 	{
-		std::tie(tree, std::ignore) = tree.erase(i);
+		std::tie(tree, std::ignore) = tree.erase(data[i]);
 		removed[i] = tree;
 	}
+
+	celero::DoNotOptimizeAway(tree);
+}
+
+// ======================================================================================
+//                         iteration performance tests
+// ======================================================================================
+BASELINE_F(RedBlackTreeIteration, STD_Set_Iteration, RedBlackTreeFindDeleteFixture, 0, 1000)
+{
+	int value = 0;
+
+	for (auto i : std_set)
+	{
+		value += i;
+	}
+
+	celero::DoNotOptimizeAway(value);
+}
+
+BENCHMARK_F(RedBlackTreeIteration, FDS_RedBlackTree_Iteration, RedBlackTreeFindDeleteFixture, 0, 1000)
+{
+	int value = 0;
+
+	for (auto i : fds_tree)
+	{
+		value += i;
+	}
+
+	celero::DoNotOptimizeAway(value);
 }
