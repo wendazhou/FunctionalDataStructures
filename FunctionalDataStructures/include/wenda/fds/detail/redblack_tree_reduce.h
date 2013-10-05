@@ -16,6 +16,12 @@ WENDA_FDS_NAMESPACE_BEGIN
 
 namespace detail
 {
+	/**
+	* Recursively reduces the given @p node in order using the given reduction @p function and @p seed.
+	* @param node The node to reduce.
+	* @param function The aggregation function.
+	* @param seed The initial value to pass to the aggregation function.
+	*/
 	template<typename T, typename Function, typename Seed>
 	typename std::decay<Seed>::type reduce(redblack_node<T> const& node, Function&& function, Seed seed)
 	{

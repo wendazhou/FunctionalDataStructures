@@ -107,8 +107,17 @@ namespace detail
 			}
 		}
 
+		/**
+		* Returns the data contained in the tree node.
+		*/
 		T const& get_data() const { return data; }
+		/**
+		* Gets a pointer to the left child of this node.
+		*/
 		const_intrusive_rb_ptr<T> const& get_left() const { return left; }
+		/**
+		* Gets a pointer to the right child of this node.
+		*/
 		const_intrusive_rb_ptr<T> const& get_right() const { return right; }
 	};
 
@@ -129,6 +138,10 @@ namespace detail
 		return rb;
 	}
 
+	/**
+	* Creates a null redblack node (that is, a node with no content) of  the given @p colour.
+	* @param colour The colour of the node to create.
+	*/
 	template<typename T>
 	const_rb_pointer<T> make_null_redblack_node(NodeColour colour = NodeColour::Black) WENDA_NOEXCEPT
 	{
@@ -153,6 +166,10 @@ namespace detail
 		return false;
 	}
 
+	/**
+	* Gets a value indicating whether the given @p node is a leaf (or null) node.
+	* @returns True if the node is null, otherwise false.
+	*/
 	template<typename T>
 	bool is_leaf(const_intrusive_rb_ptr<T> const& node) WENDA_NOEXCEPT
 	{

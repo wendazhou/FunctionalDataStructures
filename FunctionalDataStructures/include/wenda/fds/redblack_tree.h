@@ -149,6 +149,8 @@ public:
 
 	/**
     * Returns an iterator to the first and smallest element in the tree.
+	* Note that it is usually much more efficient to use reduce() to iterate the
+	* elements in the tree and perform an aggregate operation or something similar.
     * @returns An iterator to the smallest element in the tree.
 	*/
 	iterator begin() const WENDA_NOEXCEPT
