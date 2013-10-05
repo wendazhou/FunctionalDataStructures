@@ -135,7 +135,7 @@ BENCHMARK_F(RedBlackTreeDelete, FDS_RedBlackTree_Delete_Keep_All, RedBlackTreeFi
 
 	for (std::size_t i = 0; i < element_count; i++)
 	{
-		std::tie(tree, std::ignore) = tree.erase(i);
+		std::tie(tree, std::ignore) = tree.erase(data[i]);
 		removed[i] = tree;
 	}
 }
