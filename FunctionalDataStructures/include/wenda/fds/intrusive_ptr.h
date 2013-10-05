@@ -34,7 +34,7 @@ protected:
 	template<typename U, typename V, typename W, typename Z> friend class intrusive_ptr;
 public:
 	typedef typename std::add_reference<T>::type reference;
-	typedef typename std::add_reference<typename std::add_const<T>>::type const_reference;
+	typedef typename std::add_reference<typename std::add_const<T>::type>::type const_reference;
 
 	/**
 	* Initializes the @ref intrusive_ptr to a default value.

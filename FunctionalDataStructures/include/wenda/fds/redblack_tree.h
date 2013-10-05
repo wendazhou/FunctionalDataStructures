@@ -17,6 +17,7 @@
 #include "detail/redblack_tree_balance.h"
 #include "detail/redblack_tree_delete.h"
 #include "detail/redblack_tree_iterator.h"
+#include "detail/redblack_tree_reduce.h"
 
 /**
 * @file redblack_tree.h
@@ -256,7 +257,29 @@ public:
 
 		return return_t(redblack_tree<T>(std::move(blackened)), deleted);
 	}
+
+	/**
+	* Reduces the tree using the given @p function, starting with the given @p seed.
+	* This performs an in-order fold over the red-black tree.
+	* @param function The function to be used to reduce the tree.
+	* @param seed The seed to start of the reduction.
+	*/
+	template<typename Function, typename Seed>
+	typename std::decay<Seed>::type reduce(Function&& function, Seed&& seed) const
+	{
+		return detail::reduce(*root, std::forward<Function>(function), std::forward<Seed>(seed));
+	}
 };
+
+/**
+* Reduces the given @p tree.
+* This forwards to the member function redblack_tree<T>::reduce().
+*/
+template<typename T, typename Function, typename Seed>
+typename std::decay<Seed>::type reduce(redblack_tree<T> const& tree, Function&& function, Seed&& seed)
+{
+	return tree.reduce(std::forward<Function>(function), std::forward<Seed>(seed));
+}
 
 WENDA_FDS_NAMESPACE_END
 

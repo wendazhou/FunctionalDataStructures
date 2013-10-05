@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <algorithm>
+#include <functional>
 
 #include <celero/Celero.h>
 #include <wenda/fds/redblack_tree.h>
@@ -180,4 +181,11 @@ BENCHMARK_F(RedBlackTreeIteration, FDS_RedBlackTree_Iteration, RedBlackTreeFindD
 	}
 
 	celero::DoNotOptimizeAway(value);
+}
+
+BENCHMARK_F(RedBlackTreeIteration, FDS_RedBlackTree_Reduce, RedBlackTreeFindDeleteFixture, 0, 1000)
+{
+	int result = reduce(fds_tree, std::plus<int>(), 0);
+
+	celero::DoNotOptimizeAway(result);
 }

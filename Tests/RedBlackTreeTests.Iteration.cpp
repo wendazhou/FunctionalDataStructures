@@ -53,5 +53,18 @@ namespace tests
 
 			Assert::IsTrue(std::equal(tree.begin(), tree.end(), set.begin()));
 		}
+
+		TEST_METHOD(RedBlackTree_Can_Reduce_Elements)
+		{
+			redblack_tree<int> tree;
+			for (int i = 0; i < 10; i++)
+			{
+				std::tie(tree, std::ignore, std::ignore) = tree.insert(i);
+			}
+
+			auto result = reduce(tree, std::plus<int>(), 0);
+
+			Assert::AreEqual(45, result);
+		}
 	};
 }

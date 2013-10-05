@@ -79,6 +79,7 @@
     <ClInclude Include="include\wenda\fds\detail\redblack_tree_data.h" />
     <ClInclude Include="include\wenda\fds\detail\redblack_tree_delete.h" />
     <ClInclude Include="include\wenda\fds\detail\redblack_tree_iterator.h" />
+    <ClInclude Include="include\wenda\fds\detail\redblack_tree_reduce.h" />
     <ClInclude Include="include\wenda\fds\FDS_common.h" />
     <ClInclude Include="include\wenda\fds\intrusive_packed_ptr.h" />
     <ClInclude Include="include\wenda\fds\packed_ptr.h" />
